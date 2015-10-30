@@ -24,6 +24,7 @@ class Thread
     friend class IA32;
 
 protected:
+    static const bool smp = Traits<Thread>::smp;
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool reboot = Traits<System>::reboot;
 
@@ -94,7 +95,7 @@ protected:
     void constructor_prolog(unsigned int stack_size);
     void constructor_epilog(const Log_Addr & entry, unsigned int stack_size);
 
-    static Thread * volatile running() { return _scheduler.chosen( Machine::cpu_id() ); }
+    static Thread * volatile running() { return _scheduler.chosen(); }
 
     Queue::Element * link() { return &_link; }
 
@@ -131,7 +132,6 @@ protected:
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
     static Scheduler<Thread> _scheduler;
-    static Spin spin;
 };
 
 

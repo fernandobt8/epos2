@@ -14,7 +14,7 @@ void Thread::init()
     // Letting reschedule() happen during thread creation is harmless, since
     // MAIN is created first and dispatch won't replace it nor by itself
     // neither by IDLE (which has a lower priority)
-    if(Criterion::timed)
+    if(Criterion::timed && (Machine::cpu_id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 }
 

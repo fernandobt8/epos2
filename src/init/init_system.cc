@@ -15,50 +15,57 @@ private:
 
 public:
     Init_System() {
-		Machine::smp_init(System::info()->bm.n_cpus);
         db<Init>(TRC) << "Init_System()" << endl;
 
-		if(Machine::cpu_id() == 0){
+        Machine::smp_barrier();
 
-			// Initialize the processor
-			db<Init>(INF) << "Initializing the CPU: " << endl;
-			CPU::init();
-			db<Init>(INF) << "done!" << endl;
-
-			// Initialize System's heap
-			db<Init>(INF) << "Initializing system's heap: " << endl;
-			if(Traits<System>::multiheap) {
-				System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE, Segment::Flags::SYS);
-				System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment, Memory_Map<Machine>::SYS_HEAP), System::_heap_segment->size());
-			} else
-				System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
-			db<Init>(INF) << "done!" << endl;
-
-			// Initialize the machine
-			db<Init>(INF) << "Initializing the machine: " << endl;
-			Machine::init();
-			db<Init>(INF) << "done!" << endl;
-
-			// Initialize system abstractions
-			db<Init>(INF) << "Initializing system abstractions: " << endl;
-			System::init();
-			db<Init>(INF) << "done!" << endl;
-
-			// Randomize the Random Numbers Generator's seed
-			if(Traits<Random>::enabled) {
-				db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
-				if(Traits<TSC>::enabled)
-					Random::seed(TSC::time_stamp());
-
-				if(!Traits<TSC>::enabled)
-					db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
-				db<Init>(INF) << "done!" << endl;
-			}
-        }else {
-        	 APIC_Timer::config(0, APIC_Timer::Count(-1), false, false);
+        // Only the boot CPU runs INIT_SYSTEM fully
+        if(Machine::cpu_id() != 0) {
+            // Wait until the boot CPU has initialized the machine
+            Machine::smp_barrier();
+            // For IA-32, timer is CPU-local. What about other SMPs?
+            Timer::init();
+            Machine::smp_barrier();
+            return;
         }
 
-		Machine::smp_barrier();
+        // Initialize the processor
+        db<Init>(INF) << "Initializing the CPU: " << endl;
+        CPU::init();
+        db<Init>(INF) << "done!" << endl;
+
+        // Initialize System's heap
+        db<Init>(INF) << "Initializing system's heap: " << endl;
+        if(Traits<System>::multiheap) {
+            System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE, Segment::Flags::SYS);
+            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment, Memory_Map<Machine>::SYS_HEAP), System::_heap_segment->size());
+        } else
+            System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
+        db<Init>(INF) << "done!" << endl;
+
+        // Initialize the machine
+        db<Init>(INF) << "Initializing the machine: " << endl;
+        Machine::init();
+        db<Init>(INF) << "done!" << endl;
+
+        Machine::smp_barrier(); // signalizes "machine ready" to other CPUs
+
+        // Initialize system abstractions
+        db<Init>(INF) << "Initializing system abstractions: " << endl;
+        System::init();
+        db<Init>(INF) << "done!" << endl;
+
+        // Randomize the Random Numbers Generator's seed
+        if(Traits<Random>::enabled) {
+            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
+            if(Traits<TSC>::enabled)
+                Random::seed(TSC::time_stamp());
+
+            if(!Traits<TSC>::enabled)
+                db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
+            db<Init>(INF) << "done!" << endl;
+        }
+
         // Initialization continues at init_first
     }
 };

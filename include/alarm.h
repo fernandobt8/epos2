@@ -16,6 +16,7 @@ __BEGIN_SYS
 class Alarm
 {
     friend class System;
+    friend class Alarm_Chronometer;
     friend class Scheduling_Criteria::FCFS;
 
 private:

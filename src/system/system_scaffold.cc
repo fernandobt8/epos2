@@ -18,6 +18,12 @@ class First_Object
 public:
     First_Object() {
 	Display::init();
+
+	if(Traits<System>::multicore) {
+	    System_Info<Machine> * si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+
+	    Machine::smp_init(si->bm.n_cpus);
+	}
     }
 };
 
