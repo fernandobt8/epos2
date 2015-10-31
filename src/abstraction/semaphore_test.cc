@@ -6,6 +6,7 @@
 #include <semaphore.h>
 #include <alarm.h>
 #include <display.h>
+#include <architecture/ia32/cpu.h>
 
 using namespace EPOS;
 
@@ -18,6 +19,13 @@ Semaphore * chopstick[5];
 
 OStream cout;
 
+void countDelay(int delay_ms){
+    unsigned long iterations = delay_ms * (CPU::clock() / 1000);
+	for(int i; i < iterations; i++) {
+        asm("");
+	}
+}
+
 int philosopher(int n, int l, int c)
 {
     int first = (n < 4)? n : 0;
@@ -27,20 +35,20 @@ int philosopher(int n, int l, int c)
 
         table.lock();
         Display::position(l, c);
-        cout << "thinking";
+        cout << "Philosopher # "<< n << " is thinking on CPU# " << Machine::cpu_id() << endl;
         table.unlock();
 
-        Delay thinking(2000000);
+        countDelay(1000);
 
         chopstick[first]->p();   // get first chopstick
         chopstick[second]->p();   // get second chopstick
 
         table.lock();
         Display::position(l, c);
-        cout << " eating ";
+        cout << "Philosopher # "<< n << " is eating on CPU# " << Machine::cpu_id() << endl;
         table.unlock();
 
-        Delay eating(1000000);
+        countDelay(1000);
 
         chopstick[first]->v();   // release first chopstick
         chopstick[second]->v();   // release second chopstick
@@ -48,7 +56,7 @@ int philosopher(int n, int l, int c)
 
     table.lock();
     Display::position(l, c);
-    cout << "  done  ";
+    cout << "  done  on #" << Machine::cpu_id() << endl;
     table.unlock();
 
     return iterations;
@@ -59,7 +67,7 @@ int main()
     table.lock();
     Display::clear();
     Display::position(0, 0);
-    cout << "The Philosopher's Dinner:" << endl;
+    cout << "The Philosopher's Dinner: on #" << Machine::cpu_id() << endl;
 
     for(int i = 0; i < 5; i++)
         chopstick[i] = new Semaphore;
@@ -73,25 +81,25 @@ int main()
     cout << "Philosophers are alive and hungry!" << endl;
 
     Display::position(7, 44);
-    cout << '/';
+    cout << '/' << endl;
     Display::position(13, 44);
-    cout << '\\';
+    cout << '\\'<< endl;
     Display::position(16, 35);
-    cout << '|';
+    cout << '|'<< endl;
     Display::position(13, 27);
-    cout << '/';
+    cout << '/'<< endl;
     Display::position(7, 27);
-    cout << '\\';
+    cout << '\\'<< endl;
     Display::position(19, 0);
 
-    cout << "The dinner is served ..." << endl;
+    cout << "The dinner is served ... on #" << Machine::cpu_id() << endl;
     table.unlock();
 
     for(int i = 0; i < 5; i++) {
         int ret = phil[i]->join();
         table.lock();
         Display::position(20 + i, 0);
-        cout << "Philosopher " << i << " ate " << ret << " times " << endl;
+        cout << "Philosopher " << i << " ate " << ret << " times (on #" << Machine::cpu_id() << ")" << endl;
         table.unlock();
     }
 
@@ -100,7 +108,7 @@ int main()
     for(int i = 0; i < 5; i++)
         delete phil[i];
 
-    cout << "The end!" << endl;
+    cout << "The end! on #" << Machine::cpu_id() << endl;
 
     return 0;
 }
