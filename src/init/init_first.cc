@@ -23,24 +23,20 @@ public:
             CPU::int_enable();
             return;
         }
-        //CPU::int_disabled();
+        PC_Timer::disable();
         Machine::smp_barrier();
 
         Thread * first;
 		db<Init>(INF) << "Initializing the first thread: " << endl;
 
 		if(Machine::cpu_id() == 0){
-			db<Init>(TRC) << "Init_First() 2" << endl;
 			// If EPOS is not a kernel, then adjust the application entry point to __epos_app_entry,
 			// which will directly call main(). In this case, _init will have already been called,
 			// before Init_Application, to construct main()'s global objects.
 			first = new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), reinterpret_cast<int (*)()>(__epos_app_entry));
 
-			db<Init>(TRC) << "Init_First() 3" << endl;
 			// Idle thread creation must succeed main, thus avoiding implicit rescheduling
 			new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
-
-			db<Init>(TRC) << "Init_First() 4" << endl;
         }else{
         	first = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
         }
@@ -54,7 +50,8 @@ public:
         This_Thread::not_booting();
 
         Machine::smp_barrier();
-        //CPU::int_enable();
+        Thread::_timer->reset();
+        PC_Timer::enable();
 
         first->_context->load();
     }
