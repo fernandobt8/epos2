@@ -90,6 +90,17 @@ public:
     static void yield();
     static void exit(int status = 0);
 
+    static unsigned int schedule_queue(int priority) {
+    	unsigned int queue;
+    	if(priority == IDLE || priority == MAIN)
+    		queue = Machine::cpu_id();
+    	else
+    		queue = _scheduler.queue_min_size();
+
+    	db<Thread>(TRC) << "Thread schaloned: " << queue << endl;
+    	return queue;
+    }
+
 protected:
     void constructor_prolog(unsigned int stack_size);
     void constructor_epilog(const Log_Addr & entry, unsigned int stack_size);
@@ -100,8 +111,14 @@ protected:
 
     Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
 
-    static void lock() { CPU::int_disable(); spin.acquire(); }
-    static void unlock() { spin.release(); CPU::int_enable(); }
+    static void lock() {
+    	CPU::int_disable();
+    	spin.acquire();
+    }
+    static void unlock() {
+    	spin.release();
+    	CPU::int_enable();
+    }
     static bool locked() { return CPU::int_disabled(); }
 
     void suspend(bool locked);

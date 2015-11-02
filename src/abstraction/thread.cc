@@ -334,7 +334,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
     } else
     	spin.release();
 
-    db<Thread>(TRC) << "Thread::dispatch() "<< running() << ", " << Machine::cpu_id() << endl;
+    //db<Thread>(TRC) << "Thread::dispatch() "<< running() << ", " << Machine::cpu_id() << endl;
     CPU::int_enable();
 }
 

@@ -77,6 +77,7 @@ namespace Scheduling_Criteria
         FCFS(int p = NORMAL); // Defined at Alarm
     };
 
+    template<typename T>
 	class CpuAffinity: public Priority
 	{
 	public:
@@ -93,11 +94,11 @@ namespace Scheduling_Criteria
 		unsigned int _queue;
 
 	public:
-		CpuAffinity(int p = NORMAL, int queue = Machine::cpu_id()): Priority(p), _queue(queue) {}
+		CpuAffinity(int p = NORMAL): Priority(p), _queue(T::schedule_queue(p)) {}
 
 		static unsigned int current_queue() { return Machine::cpu_id(); }
 
-		const unsigned int & queue() const { return _queue; }
+		const unsigned int queue() const { return _queue; }
 	};
 }
 
