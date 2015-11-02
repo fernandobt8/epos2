@@ -76,12 +76,35 @@ namespace Scheduling_Criteria
     public:
         FCFS(int p = NORMAL); // Defined at Alarm
     };
+
+	class CpuAffinity: public Priority
+	{
+	public:
+		enum {
+			MAIN   = 0,
+			NORMAL = 1,
+			IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+		};
+
+	    static const bool timed = true;
+		static const bool dynamic = false;
+		static const bool preemptive = true;
+		static const unsigned int QUEUES = Traits<Machine>::CPUS;
+		unsigned int _queue;
+
+	public:
+		CpuAffinity(int p = NORMAL, int queue = Machine::cpu_id()): Priority(p), _queue(queue) {}
+
+		static unsigned int current_queue() { return Machine::cpu_id(); }
+
+		const unsigned int & queue() const { return _queue; }
+	};
 }
 
 
 // Scheduling_Queue
 template<typename T, typename R = typename T::Criterion>
-class Scheduling_Queue: public Scheduling_List<T> {};
+class Scheduling_Queue: public Scheduling_Multilist<T> {};
 
 // Scheduler
 // Objects subject to scheduling by Scheduler must declare a type "Criterion"

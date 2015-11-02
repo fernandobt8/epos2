@@ -39,7 +39,7 @@ template<> struct Traits<Debug>
     static const bool error   = true;
     static const bool warning = true;
     static const bool info    = false;
-    static const bool trace   = true;
+    static const bool trace   = false;
 };
 
 template<> struct Traits<Lists>: public Traits<void>
@@ -119,13 +119,13 @@ template<> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::RR Criterion;
+    typedef Scheduling_Criteria::CpuAffinity Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = hysterically_debugged;
 };
 
-template<> struct Traits<Scheduler<Thread, Traits<Build>::CPUS> >: public Traits<void>
+template<> struct Traits<Scheduler<Thread> >: public Traits<void>
 {
     static const bool debugged = Traits<Thread>::trace_idle || hysterically_debugged;
 };
