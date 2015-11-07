@@ -299,7 +299,12 @@ void Thread::reschedule()
     assert(locked());
 
     Thread * prev = running();
-    Thread * next = _scheduler.choose(Machine::cpu_id());
+    Thread * next;
+	if(prev->priority() == IDLE){
+		next = _scheduler.choose_another(Machine::cpu_id());
+	}else{
+		next = _scheduler.choose(Machine::cpu_id());
+	}
 
     dispatch(prev, next);
 }
@@ -333,10 +338,8 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 		spin.release();
         CPU::switch_context(&prev->_context, next->_context);
     } else
-    	spin.release();
+    	unlock();
 
-    db<Thread>(TRC) << "Thread::dispatch() "<< running() << ", " << Machine::cpu_id() << endl;
-    CPU::int_enable();
 }
 
 
