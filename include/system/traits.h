@@ -28,7 +28,7 @@ template<> struct Traits<Build>
     enum {Legacy};
     static const unsigned int MODEL = Legacy;
 
-    static const unsigned int CPUS = 8;
+    static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
@@ -120,7 +120,7 @@ template<> struct Traits<Thread>: public Traits<void>
     static const bool smp = Traits<System>::multicore;
 
     typedef Scheduling_Criteria::CpuAffinity<Thread> Criterion;
-    static const unsigned int QUANTUM = 10000; // us
+    static const unsigned int QUANTUM = 20000; // us
 
     static const bool trace_idle = hysterically_debugged;
 };

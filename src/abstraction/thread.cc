@@ -4,6 +4,7 @@
 #include <system.h>
 #include <thread.h>
 #include <alarm.h> // for FCFS
+#include <ic.h>
 
 // This_Thread class attributes
 __BEGIN_UTIL
@@ -44,7 +45,7 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
         _scheduler.suspend(this);
 
     if(preemptive && (_state == READY) && (_link.rank() != IDLE))
-        reschedule();
+    	cutucao(this);
     else
         unlock();
 }
@@ -110,7 +111,7 @@ void Thread::priority(const Priority & c)
     }
 
     if(preemptive) {
-        reschedule();
+    	cutucao(this);
     }
 }
 
@@ -184,7 +185,7 @@ void Thread::resume()
         _scheduler.resume(this);
 
         if(preemptive)
-            reschedule();
+        	cutucao(this);
     } else {
         db<Thread>(WRN) << "Resume called for unsuspended object!" << endl;
 
@@ -261,7 +262,7 @@ void Thread::wakeup(Queue * q)
         _scheduler.resume(t);
 
         if(preemptive)
-            reschedule();
+        	cutucao(t);;
     } else
         unlock();
 }
@@ -282,7 +283,7 @@ void Thread::wakeup_all(Queue * q)
             _scheduler.resume(t);
 
             if(preemptive) {
-                reschedule();
+            	cutucao(t);
                 lock();
             }
          }
@@ -366,6 +367,20 @@ int Thread::idle()
     CPU::halt();
 
     return 0;
+}
+
+void Thread::reschedule_handler(const Interrupt_Id & i)
+{
+	lock();
+	db<Thread>(WRN) << "Toque recebido" << endl;
+ 	reschedule();
+}
+//Novembro Azul
+void Thread::cutucao(Thread * needy)
+{
+	spin.release();
+	db<Thread>(WRN) << "Toque retal na fila " << needy->link()->rank().queue() << endl;
+	IC::ipi_send(needy->link()->rank().queue(), 48);
 }
 
 __END_SYS
