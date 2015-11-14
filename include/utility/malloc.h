@@ -10,26 +10,13 @@
 extern "C"
 {
     // Standard C Library allocators
-    inline void * malloc(size_t bytes) {
-        __USING_SYS;
-        if(Traits<System>::multiheap)
-            return Application::_heap->alloc(bytes);
-        else
-            return System::_heap->alloc(bytes);
-    }
+    void * malloc(size_t bytes);
+    void free(void * ptr);
 
     inline void * calloc(size_t n, unsigned int bytes) {
         void * ptr = malloc(n * bytes);
         memset(ptr, 0, n * bytes);
         return ptr;
-    }
-
-    inline void free(void * ptr) {
-        __USING_SYS;
-        if(Traits<System>::multiheap)
-            Heap::typed_free(ptr);
-        else
-            Heap::untyped_free(System::_heap, ptr);
     }
 }
 

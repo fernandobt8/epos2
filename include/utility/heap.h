@@ -30,7 +30,6 @@ public:
     }
 
     void * alloc(unsigned int bytes) {
-    	acquire();
         db<Heaps>(TRC) << "Heap::alloc(this=" << this << ",bytes=" << bytes;
 
         if(!bytes)
@@ -60,12 +59,10 @@ public:
 
         db<Heaps>(TRC) << ") => " << reinterpret_cast<void *>(addr) << endl;
 
-        release();
         return addr;
     }
 
     void free(void * ptr, unsigned int bytes) {
-    	acquire();
         db<Heaps>(TRC) << "Heap::free(this=" << this << ",ptr=" << ptr << ",bytes=" << bytes << ")" << endl;
 
         if(ptr && (bytes >= sizeof(Element))) {
@@ -73,7 +70,6 @@ public:
             Element * m1, * m2;
             insert_merging(e, &m1, &m2);
         }
-        release();
     }
 
     static void typed_free(void * ptr) {
@@ -91,17 +87,6 @@ public:
 
 private:
     void out_of_memory();
-    Spin spin;
-
-    void acquire(){
-    	spin.acquire();
-    	CPU::int_disable();
-    }
-
-    void release(){
-    	spin.release();
-    	CPU::int_enable();
-    }
 };
 
 __END_UTIL
