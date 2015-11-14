@@ -137,6 +137,7 @@ protected:
 
     static int idle();
     static void reschedule_handler(const Interrupt_Id &);
+    static void cutucao(Thread *);
 
 private:
     static void init();
