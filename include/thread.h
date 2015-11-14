@@ -9,6 +9,7 @@
 #include <machine.h>
 #include <system.h>
 #include <scheduler.h>
+#include <ic.h>
 
 extern "C" { void __exit(); }
 
@@ -105,6 +106,8 @@ protected:
     void constructor_prolog(unsigned int stack_size);
     void constructor_epilog(const Log_Addr & entry, unsigned int stack_size);
 
+    typedef IC::Interrupt_Id Interrupt_Id;
+
     static Thread * volatile running() { return _scheduler.chosen(); }
 
     Queue::Element * link() { return &_link; }
@@ -133,6 +136,7 @@ protected:
     static void dispatch(Thread * prev, Thread * next, bool charge = true);
 
     static int idle();
+    static void reschedule_handler(const Interrupt_Id &);
 
 private:
     static void init();

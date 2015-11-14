@@ -4,6 +4,7 @@
 #include <system.h>
 #include <thread.h>
 #include <alarm.h> // for FCFS
+#include <ic.h>
 
 // This_Thread class attributes
 __BEGIN_UTIL
@@ -44,7 +45,7 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
         _scheduler.suspend(this);
 
     if(preemptive && (_state == READY) && (_link.rank() != IDLE))
-        reschedule();
+    	reschedule();
     else
         unlock();
 }
@@ -110,7 +111,7 @@ void Thread::priority(const Priority & c)
     }
 
     if(preemptive) {
-        reschedule();
+    	reschedule();
     }
 }
 
@@ -282,7 +283,7 @@ void Thread::wakeup_all(Queue * q)
             _scheduler.resume(t);
 
             if(preemptive) {
-                reschedule();
+            	reschedule();
                 lock();
             }
          }
@@ -366,6 +367,11 @@ int Thread::idle()
     CPU::halt();
 
     return 0;
+}
+
+void Thread::reschedule_handler(const Interrupt_Id & i)
+{
+ 	reschedule();
 }
 
 __END_SYS

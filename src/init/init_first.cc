@@ -37,6 +37,9 @@ public:
 
 			// Idle thread creation must succeed main, thus avoiding implicit rescheduling
 			new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
+
+			IC::int_vector(IC::INT_RESCHEDULER, Thread::reschedule_handler);
+			IC::enable(IC::INT_RESCHEDULER);
         }else{
         	first = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
         }
