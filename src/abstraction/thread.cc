@@ -39,7 +39,8 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
                     << ",stack={b=" << reinterpret_cast<void *>(_stack)
                     << ",s=" << stack_size
                     << "},context={b=" << _context
-                    << "," << *_context << "}) => " << this << endl;
+                    << "," << *_context << "}) => " << this 
+                    << "|||=> Queue CPU: " << _link.rank().queue() << endl;
 
     if((_state != READY) && (_state != RUNNING))
         _scheduler.suspend(this);
@@ -51,6 +52,7 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
             unlock(false);
         else
             unlock();
+
 }
 
 

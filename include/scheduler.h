@@ -97,14 +97,21 @@ namespace Scheduling_Criteria
 		unsigned int _queue;
 
 	public:
-		CpuAffinity(int p = NORMAL): Priority(p), _queue(T::schedule_queue(p)) {}
+		CpuAffinity(int p = NORMAL): Priority(p) 
+        {
+            if (p == IDLE || p == MAIN)
+                _queue = EPOS::S::Machine::cpu_id();
+            else
+                _queue = T::_scheduler.queue_min_size();
+        }
 
 		static unsigned int current_queue() { return Machine::cpu_id(); }
-
+        
 		const unsigned int queue() const { return _queue; }
 	};
 }
 
+// "ALL_TIME" do CFS vai ser o nosso clock(). 
 
 // Scheduling_Queue
 template<typename T, typename R = typename T::Criterion>

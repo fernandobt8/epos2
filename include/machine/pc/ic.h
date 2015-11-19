@@ -47,7 +47,7 @@ public:
     enum {
         IRQ_TIMER	= 0,
         IRQ_KEYBOARD	= 1,
-        IRQ_CASCADE	= 2,
+        IRQ_CASCADE	    = 2,
         IRQ_SERIAL24    = 3,
         IRQ_SERIAL13    = 4,
         IRQ_PARALLEL23  = 5,

@@ -23,6 +23,7 @@ class Thread
     friend class Synchronizer_Common;
     friend class Alarm;
     friend class IA32;
+    friend class Scheduling_Criteria::CpuAffinity<Thread>;
 
 protected:
     static const bool smp = Traits<Thread>::smp;
@@ -94,16 +95,6 @@ public:
     static void exit(int status = 0);
 
     unsigned int queue() { return link()->rank().queue(); }
-
-    static unsigned int schedule_queue(int priority) {
-		unsigned int queue;
-		if(priority == IDLE || priority == MAIN)
-			queue = Machine::cpu_id();
-		else
-			queue = _scheduler.queue_min_size();
-
-		return queue;
-    }
 
 protected:
     void constructor_prolog(unsigned int stack_size);
