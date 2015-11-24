@@ -69,6 +69,7 @@ public:
 
     // Thread Queue
     typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
+    typedef Timer::Tick Count;
 
 public:
     template<typename ... Tn>
@@ -87,8 +88,8 @@ public:
     void suspend() { suspend(false); }
     void resume();
 
-    TSC::Time_Stamp runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
-    TSC::Time_Stamp waittime_at(int cpu_id) { return stats.waittime_at(cpu_id); }
+    Count runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
+    Count waittime_at(int cpu_id) { return stats.waittime_at(cpu_id); }
 
     static Thread * volatile self() { return running(); }
     static void yield();
@@ -138,7 +139,7 @@ protected:
     static Spin spin;
 
     // Accounting
-    Accounting<Timer::Tick> stats;
+    Accounting<Count> stats;
 };
 
 

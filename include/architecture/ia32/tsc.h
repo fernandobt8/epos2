@@ -26,7 +26,6 @@ public:
     }
 
     static Time_Stamp timestamp_to_seconds(Time_Stamp ts) {
-        // db<Thread>(TRC) << "CPU::clock=" << CPU::clock() << "  | TS=" << ts << endl;
     	return (ts / CPU::clock());
     }
 };

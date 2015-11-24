@@ -88,20 +88,18 @@ int main()
     }
 
     // Printing statistics (only a single CPU will print this)
-    // typedef CPU::Reg32 Count;
-    typedef TSC::Time_Stamp Count;
-    cout << "|  Philosopher  |  #0  |  #1  |  #2  |  #3  |  #4  |  #5  |  #6  |  #7  |" << endl;
+    typedef Timer::Tick Count;
     for (int i = 0; i < 5; i++) {
         Count thread_runtime = 0;
         table.lock();
 
-        cout << "|      #" << i << "      ";
+        cout << "Philosopher " << i << "  ";
         for (int cpu_id = 0; cpu_id < Traits<Build>::CPUS; cpu_id++) {
-            Count ts_per_cpu = phil[i]->total_ts(cpu_id);
+            Count ts_per_cpu = phil[i]->runtime_at(cpu_id);
             thread_runtime += ts_per_cpu;
-            cout << " |   " << ts_per_cpu; // TSC::timestamp_to_seconds(ts_per_cpu);
+            cout << "| " << cpu_id << ": " << ts_per_cpu << "  ";
         }
-        cout << " | T: " << thread_runtime << endl; //TSC::timestamp_to_seconds(thread_runtime) << endl;
+        cout << "| T: " << thread_runtime << endl;
         
         table.unlock();
     }
