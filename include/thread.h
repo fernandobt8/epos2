@@ -9,6 +9,7 @@
 #include <machine.h>
 #include <system.h>
 #include <scheduler.h>
+#include <accounting.h>
 
 extern "C" { void __exit(); }
 
@@ -86,6 +87,9 @@ public:
     void suspend() { suspend(false); }
     void resume();
 
+    TSC::Time_Stamp runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
+    TSC::Time_Stamp waittime_at(int cpu_id) { return stats.waittime_at(cpu_id); }
+
     static Thread * volatile self() { return running(); }
     static void yield();
     static void exit(int status = 0);
@@ -132,6 +136,9 @@ protected:
     static Scheduler_Timer * _timer;
     static Scheduler<Thread> _scheduler;
     static Spin spin;
+
+    // Accounting
+    Accounting<Timer::Tick> stats;
 };
 
 

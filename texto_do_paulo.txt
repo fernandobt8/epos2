@@ -1,0 +1,2 @@
+guardar menor tempo utilizado por thread -> criar thread com esse tempo
+

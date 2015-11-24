@@ -269,6 +269,7 @@ public:
 
         for(unsigned int i = 0; i < Traits<Machine>::CPUS; i++)
             _current[i] = _initial;
+
     }
 
     ~PC_Timer() {
@@ -326,6 +327,9 @@ private:
 
 public:
     Scheduler_Timer(const Microsecond & quantum, const Handler & handler): PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
+    static Count tick_count() {
+        return APIC_Timer::read(PC_Timer::USER);
+    }
 };
 
 

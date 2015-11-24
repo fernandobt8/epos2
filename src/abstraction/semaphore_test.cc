@@ -20,7 +20,7 @@ Semaphore * chopstick[5];
 OStream cout;
 
 void countDelay(int delay_ms){
-    unsigned long iterations = delay_ms * (CPU::clock() / 1000);
+    unsigned long iterations = delay_ms * (CPU::clock() / 1500);
 	for(int i; i < iterations; i++) {
         asm("");
 	}
@@ -38,7 +38,7 @@ int philosopher(int n, int l, int c)
         cout << "P"<< n << " is thinking on CPU# " << Machine::cpu_id() << endl;
         table.unlock();
 
-        countDelay(500);
+        countDelay(600);
 
         chopstick[first]->p();   // get first chopstick
         chopstick[second]->p();   // get second chopstick
@@ -48,7 +48,7 @@ int philosopher(int n, int l, int c)
         cout << "P"<< n << " is eeeating on CPU# " << Machine::cpu_id() << endl;
         table.unlock();
 
-        countDelay(500);
+        countDelay(600);
 
         chopstick[first]->v();   // release first chopstick
         chopstick[second]->v();   // release second chopstick
@@ -100,6 +100,25 @@ int main()
         table.lock();
         Display::position(20 + i, 0);
         cout << "Philosopher " << i << " ate " << ret << " times (on #" << Machine::cpu_id() << ")" << endl;
+        table.unlock();
+    }
+
+    // Printing statistics (only a single CPU will print this)
+    typedef TSC::Time_Stamp Count;
+    // cout << "|  N  |  # 0  |  # 1  |  # 2  |  # 3  |  # 4  |  # 5  |  # 6  |  # 7  |   T   |" << endl;
+    // cout << "-------------------------------------------------------------------------------" << endl;
+    for (int i = 0; i < 5; i++) {
+        Count thread_runtime = 0;
+        table.lock();
+
+    cout << "|  Philosopher " << i << "  ";
+        for (int cpu_id = 0; cpu_id < Traits<Build>::CPUS; cpu_id++) {
+            Count ts_per_cpu = phil[i]->runtime_at(cpu_id);
+            thread_runtime += ts_per_cpu;
+            cout << "|  " << ts_per_cpu << "  ";
+        }
+        cout << "| T: " << thread_runtime << endl;
+        
         table.unlock();
     }
 

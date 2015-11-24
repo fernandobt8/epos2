@@ -320,14 +320,34 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
 
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
+    Timer::Tick count = -1;
     if(charge) {
         if(Criterion::timed)
+            count = Scheduler_Timer::tick_count();
             _timer->reset();
     }
 
     if(prev != next) {
+
+        // ver documentação de tempo do QEMU. Hospedeiro está fazendo DVS.
+
+        // next->_ts_count = TSC::time_stamp();
+        // next->_ts_count = Scheduler_Timer::tick_count();
+        // next->stats.last_runtime(TSC::time_stamp());
+        if (prev->_state == RUNNING || prev->_state == FINISHING) {
+            if (count != unsigned(-1))
+                prev->stats.total_runtime(count);
+            // prev->stats.total_runtime(next->stats.last_runtime() - prev->stats.last_runtime());
+            // cout << "Next timestamp count: " << next->_ts_count << endl;
+            // cout << "Prev difference to be added to the vector: " << (next->_ts_count - prev->_ts_count) << endl;
+            // prev->_total_ts[Machine::cpu_id()] += (next->_ts_count - prev->_ts_count);
+            // db<Thread>(TRC) << "Prev=" << prev->_ts_count << "  ->  Next=" << next->_ts_count << endl;
+            // prev->_total_ts[Machine::cpu_id()] += (next->_ts_count - prev->_ts_count);
+        }
+
         if(prev->_state == RUNNING)
             prev->_state = READY;
+        
         next->_state = RUNNING;
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
