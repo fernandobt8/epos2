@@ -349,14 +349,61 @@ void Thread::cutucao(Thread * needy)
 	unlock();
 }
 
+/*
+
+Aula 25/11/2015.
+
+Quantum = tempo para acontecer uma reavaliação de prioridade. Valor fixo.
+Vamos utilizar prioridades dinâmicas.
+
+mediaHistórica = (mediaHistórica + corrente)/2  
+[ Não faz sentido armazenar a série histórica inteira, armazenar uma quantidade de samples. ] 
+[ Ir para o mais elaborado caso isso não nos satisfaça (não vai nos satisfazer). ]
+
+Afinidade no algoritmo global pode. Mas é muito pior.
+
+Jantar dos Filósofos não é um bom teste p/ testar afinidade de cache 
+(por causa do for que não faz nada e não precisa de nada na cache).
+
+"Bin packing". Resolver como first-fit, worst-fit, best-fit.
+https://en.wikipedia.org/wiki/Bin_packing_problem
+
+| P2         |
+| P0  P1  P3 |  <-- como fazer justiça nesse caso? Tem que ter arrumar, mas alguém vai
+|------------|      ter um pouco de injustiça.
+| C0  C1  C2 |
+
+Fazer justiça por fila de CPU tbm.
+
+C* = CPU
+P* = PROCESS
+
+O erro do TSC é em relação ao timestamp que em um ambiente emulado (QEMU) funciona, pois a instrução
+assembly realizada no QEMU que retorna o TS é mapeada para uma mesma CPU direto do hardware 
+(ou seja, cada CPU lógica do EPOS tem um timestamp compatível com as outras CPUs lógicas 
+[sequencial e posterior]. Não podemos assumir isso, pois em um ambiente real isso não 
+funcionaria). 
+
+CFS é TEMPO DE ESPERA das threads, não tempo que rodou. Se uma thred não aumentou o tempo 
+de espera das demais threads (exemplo: outras threads esperando IO), essa thread não é 
+prejudicada na próxima execução. 
+
+*/
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
+    Count count = 0;
     if(charge) {
         if(Criterion::timed)
+            count = Scheduler_Timer::tick_count();
             _timer->reset();
     }
 
     if(prev != next) {
+
+         // ver documentação de tempo do QEMU p/ timestamp. Hospedeiro está fazendo DVS.
+        if (prev->_state == RUNNING || prev->_state == FINISHING)
+            prev->stats.total_runtime(count);
+        
         if(prev->_state == RUNNING)
             prev->_state = READY;
         next->_state = RUNNING;

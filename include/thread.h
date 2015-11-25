@@ -10,6 +10,7 @@
 #include <system.h>
 #include <scheduler.h>
 #include <ic.h>
+#include <accounting.h>
 
 extern "C" { void __exit(); }
 
@@ -71,6 +72,7 @@ public:
     // Thread Queue
     typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
     typedef Simple_List<Thread> List;
+    typedef Timer::Tick Count;
 
 public:
     template<typename ... Tn>
@@ -88,6 +90,9 @@ public:
     void pass();
     void suspend() { suspend(false); }
     void resume();
+
+    Count runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
+    Count waittime_at(int cpu_id) { return stats.waittime_at(cpu_id); }
 
     static Thread * volatile self() { return running(); }
     static void yield();
@@ -163,6 +168,9 @@ protected:
     static Scheduler<Thread> _scheduler;
     static Spin _lock;
     static List toSuspend [];
+
+    // Accounting
+    Accounting<Count> stats;
 };
 
 

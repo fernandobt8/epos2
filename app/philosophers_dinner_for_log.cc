@@ -10,7 +10,7 @@
 
 using namespace EPOS;
 
-const int iterations = 10;
+const int iterations = 3;
 
 Mutex table;
 
@@ -21,9 +21,9 @@ OStream cout;
 
 void countDelay(int delay_ms){
     unsigned long iterations = delay_ms * (CPU::clock() / 1000);
-	for(int i; i < iterations; i++) {
+    for(int i; i < iterations; i++) {
         asm("");
-	}
+    }
 }
 
 int philosopher(int n, int l, int c)
@@ -37,7 +37,7 @@ int philosopher(int n, int l, int c)
         cout << "Philosopher # "<< n << " is thinking on CPU# " << Machine::cpu_id() << endl;
         table.unlock();
 
-        countDelay(500);
+        countDelay(200);
 
         chopstick[first]->p();   // get first chopstick
         chopstick[second]->p();   // get second chopstick
@@ -46,7 +46,7 @@ int philosopher(int n, int l, int c)
         cout << "Philosopher # "<< n << " is eating on CPU# " << Machine::cpu_id() << endl;
         table.unlock();
 
-        countDelay(500);
+        countDelay(200);
 
         chopstick[first]->v();   // release first chopstick
         chopstick[second]->v();   // release second chopstick
@@ -76,7 +76,6 @@ int main()
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
     cout << "Philosophers are alive and angry! (on CPU# " << Machine::cpu_id() << endl;
-
     cout << "The dinner is served ... on Table#" << Machine::cpu_id() << endl;
     table.unlock();
 
@@ -84,6 +83,23 @@ int main()
         int ret = phil[i]->join();
         table.lock();
         cout << "Philosopher " << i << " ate " << ret << " times (on #" << Machine::cpu_id() << ")" << endl;
+        table.unlock();
+    }
+
+    // Printing statistics (only a single CPU will print this)
+    typedef Timer::Tick Count;
+    for (int i = 0; i < 5; i++) {
+        Count thread_runtime = 0;
+        table.lock();
+
+        cout << "Philosopher " << i << "  ";
+        for (int cpu_id = 0; cpu_id < Traits<Build>::CPUS; cpu_id++) {
+            Count ts_per_cpu = phil[i]->runtime_at(cpu_id);
+            thread_runtime += ts_per_cpu;
+            cout << "| " << cpu_id << ": " << ts_per_cpu << "  ";
+        }
+        cout << "| T: " << thread_runtime << endl;
+        
         table.unlock();
     }
 
