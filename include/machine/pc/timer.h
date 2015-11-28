@@ -245,7 +245,8 @@ public:
     enum {
         SCHEDULER,
         ALARM,
-        USER
+        USER,
+		REBALANCER
     };
 
 protected:
@@ -253,7 +254,7 @@ protected:
     typedef Engine::Count Count;
     typedef IC::Interrupt_Id Interrupt_Id;
 
-    static const unsigned int CHANNELS = 3;
+    static const unsigned int CHANNELS = 4;
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
 
 public:
@@ -329,6 +330,15 @@ public:
     static Count tick_count() {
         return APIC_Timer::read(PC_Timer::USER);
     }
+};
+
+class Rebalancer_Timer: public PC_Timer
+{
+private:
+    typedef RTC::Microsecond Microsecond;
+
+public:
+    Rebalancer_Timer(const Microsecond & quantum, const Handler & handler): PC_Timer(1000000 / quantum, handler, REBALANCER) {}
 };
 
 

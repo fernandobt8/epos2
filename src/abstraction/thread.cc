@@ -15,6 +15,7 @@ __BEGIN_SYS
 // Class attributes
 volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
+Rebalancer_Timer * Thread::_rebalancer_timer;
 Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
 Thread::List Thread::toSuspend[Thread::Criterion::QUEUES];
@@ -333,6 +334,10 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
     lock();
 
     reschedule();
+}
+
+void Thread::rebalance_handler(const IC::Interrupt_Id & i){
+
 }
 
 void Thread::reschedule_handler(const IC::Interrupt_Id & i)
