@@ -75,7 +75,7 @@ int main()
     phil[3] = new Thread(&philosopher, 3, 16, 24);
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
-    cout << "Philosophers are alive and angry! (on CPU# " << Machine::cpu_id() << endl;
+    cout << "Philosophers are alive and angry! (on CPU# " << Machine::cpu_id() << ")" << endl;
     cout << "The dinner is served ... on Table#" << Machine::cpu_id() << endl;
     table.unlock();
 
@@ -104,21 +104,21 @@ int main()
         table.unlock();
     }
 
-    // cout << "\n\nWait time of each philosopher:\n" << endl;
-    // for (int i = 0; i < 5; i++) {
-    //     Count thread_runtime = 0;
-    //     table.lock();
+    cout << "\n\nWait time of each philosopher (not precise) :\n" << endl;
+    for (int i = 0; i < 5; i++) {
+        Count thread_waittime = 0;
+        table.lock();
 
-    //     cout << "Philosopher " << i << "  ";
-    //     for (int cpu_id = 0; cpu_id < Traits<Build>::CPUS; cpu_id++) {
-    //         Count ts_per_cpu = phil[i]->runtime_at(cpu_id);
-    //         thread_runtime += ts_per_cpu;
-    //         cout << "| " << cpu_id << ": " << ts_per_cpu << "  ";
-    //     }
-    //     cout << "| T: " << thread_runtime << endl;
+        cout << "Philosopher " << i << "  ";
+        for (int cpu_id = 0; cpu_id < Traits<Build>::CPUS; cpu_id++) {
+            Count ts_per_cpu = phil[i]->waittime_at(cpu_id);
+            thread_waittime += ts_per_cpu;
+            cout << "| " << cpu_id << ": " << ts_per_cpu << "  ";
+        }
+        cout << "| T: " << thread_waittime << endl;
         
-    //     table.unlock();
-    // }
+        table.unlock();
+    }
 
     for(int i = 0; i < 5; i++)
         delete chopstick[i];
