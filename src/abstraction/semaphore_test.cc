@@ -103,8 +103,9 @@ int main()
         table.unlock();
     }
 
-    // Printing statistics (only a single CPU will print this)
+     // Printing statistics (only a single CPU will print this)
     typedef Timer::Tick Count;
+    cout << "\n\nRuntime of each philosopher:\n" << endl;
     for (int i = 0; i < 5; i++) {
         Count thread_runtime = 0;
         table.lock();

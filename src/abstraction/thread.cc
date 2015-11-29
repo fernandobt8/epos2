@@ -45,6 +45,9 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
         _scheduler.suspend(this);
 
     if(preemptive && (_state == READY) && (_link.rank() != IDLE))
+        // stats.last_waittime(Scheduler_Timer::tick_count());
+        // stats.total_waittime(Scheduler_Timer::tick_count());
+        // stats.waiting_since(_timer->read());
         cutucao(this);
     else
         if((_state == RUNNING) || (_link.rank() == IDLE)) // Keep interrupts disabled during init_first()
@@ -391,21 +394,23 @@ prejudicada na próxima execução.
 */
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
-    Count count = 0;
+
+    Count count = _timer->read();
     if(charge) {
         if(Criterion::timed)
-            count = Scheduler_Timer::tick_count();
             _timer->reset();
+    }
+
+    // Don't care if prev != next, because at exit(), prev==next and we still need to account that.
+    if ((prev->_state == RUNNING || prev->_state == FINISHING) && prev->_link.rank() != IDLE){
+        prev->stats.total_runtime(count);
     }
 
     if(prev != next) {
 
-         // ver documentação de tempo do QEMU p/ timestamp. Hospedeiro está fazendo DVS.
-        if (prev->_state == RUNNING || prev->_state == FINISHING)
-            prev->stats.total_runtime(count);
-        
         if(prev->_state == RUNNING)
             prev->_state = READY;
+            
         next->_state = RUNNING;
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;

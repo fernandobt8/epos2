@@ -326,9 +326,6 @@ private:
 
 public:
     Scheduler_Timer(const Microsecond & quantum, const Handler & handler): PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
-    static Count tick_count() {
-        return APIC_Timer::read(PC_Timer::USER);
-    }
 };
 
 
