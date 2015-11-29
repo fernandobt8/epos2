@@ -62,7 +62,8 @@ public:
 
     // Thread Configuration
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE)
+    	Criterion init_c = set_initial_priority();
+        Configuration(const State & s = READY, const Criterion & c = init_c, unsigned int ss = STACK_SIZE)
         : state(s), criterion(c), stack_size(ss) {}
 
         State state;
@@ -88,7 +89,7 @@ public:
     void priority(const Priority & p);
 
     void redefine_priority();
-    void Thread::update_min_runtime() { minRuntime = _scheduler.queue_min_rank(); }
+    unsigned int set_initial_priority();
     int join();
     void pass();
     void suspend() { suspend(false); }

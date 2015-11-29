@@ -125,11 +125,20 @@ void Thread::priority(const Priority & c)
 
 void Thread::redefine_priority(){
 	this->_link.rank = stats.total_runtime();
-	if(maxRuntime < this->_link.rank){
-		maxRuntime = this->_link.rank;
-	}
 }
 
+unsigned int Thread::set_initial_priority(){
+	unsigned int sum = 0;
+	unsigned int considered = Traits<Build>::CPUS;
+	for(unsigned int i = 0; i < Traits<Build>::CPUS; i++){
+		if(_scheduler.chosen_from_list(i)->_link.rank != IDLE && _scheduler.chosen_from_list(i)->_link.rank != MAIN){
+			sum+= _scheduler.chosen_from_list(i)->_link.rank;
+		}else{
+			considered--;
+		}
+	}
+	return sum = sum/considered;
+}
 
 int Thread::join()
 {
@@ -334,6 +343,7 @@ void Thread::reschedule()
     assert(locked());
 
     Thread * prev = running();
+    prev->redefine_priority();
     Thread * next = _scheduler.choose();
 
     dispatch(prev, next);
