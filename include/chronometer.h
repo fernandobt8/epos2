@@ -29,6 +29,9 @@ public:
 
     Microsecond read() { return ticks() * 1000000 / frequency(); }
 
+    // This ISN'T the correct approach. Just using this to make more human-readable.
+    Hertz read_ticks() { return ticks() / frequency(); } 
+
 private:
     Time_Stamp ticks() {
         if(_start == 0)
