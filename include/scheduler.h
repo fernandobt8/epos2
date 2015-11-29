@@ -97,8 +97,16 @@ namespace Scheduling_Criteria
 		unsigned int _queue;
 
 	public:
-		CpuAffinity(int p = NORMAL): Priority(p), _queue(T::schedule_queue(p)) {}
+		CpuAffinity(int p = NORMAL): Priority(p) {
+			if(_priority == IDLE || _priority == MAIN)
+				_queue = Machine::cpu_id();
+			else
+				_queue = T::schedule_queue();
+		}
 
+		CpuAffinity(int p, unsigned int queue): Priority(p) {
+			_queue = queue;
+		}
 		static unsigned int current_queue() { return Machine::cpu_id(); }
 
 		const unsigned int queue() const { return _queue; }
@@ -193,6 +201,10 @@ public:
         db<Scheduler>(TRC) << obj << endl;
 
         return obj;
+    }
+
+    T* chosen_from_list(unsigned int list){
+    	return Base::_list[list].chosen()->object();
     }
 };
 

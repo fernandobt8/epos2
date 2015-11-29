@@ -12,8 +12,8 @@ PC_Timer * PC_Timer::_channels[CHANNELS];
 // Class methods
 void PC_Timer::int_handler(const Interrupt_Id & i)
 {
-    if(_channels[REBALANCER] && Machine::cpu_id() == 0 && (--_channels[REBALANCER]->_current[0] <= 0)){
-    	_channels[REBALANCER]->_current[0] = _channels[REBALANCER]->_initial;
+    if(_channels[REBALANCER] && (--_channels[REBALANCER]->_current[Machine::cpu_id()] <= 0)){
+    	_channels[REBALANCER]->_current[Machine::cpu_id()] = _channels[REBALANCER]->_initial;
     	_channels[REBALANCER]->_handler(i);
     }
 

@@ -101,14 +101,8 @@ public:
 
     unsigned int queue() { return link()->rank().queue(); }
 
-    static unsigned int schedule_queue(int priority) {
-		unsigned int queue;
-		if(priority == IDLE || priority == MAIN)
-			queue = Machine::cpu_id();
-		else
-			queue = _scheduler.queue_min_size();
-
-		return queue;
+    static unsigned int schedule_queue() {
+    	return _scheduler.queue_min_size();
     }
 
 protected:
