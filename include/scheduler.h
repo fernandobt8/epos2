@@ -111,6 +111,35 @@ namespace Scheduling_Criteria
 
 		const unsigned int queue() const { return _queue; }
 	};
+
+    template<typename T>
+    class CFSAffinity: public Priority
+	{
+	public:
+		enum {
+			MAIN   = 0,
+			NORMAL = 1,
+			IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+		};
+
+		static const bool timed = true;
+		static const bool dynamic = false;
+		static const bool preemptive = true;
+		static const unsigned int QUEUES = Traits<Machine>::CPUS;
+		unsigned int _queue;
+
+	public:
+		CFSAffinity(int p = NORMAL): Priority(p) {
+			if(_priority == IDLE || _priority == MAIN)
+				_queue = Machine::cpu_id();
+			else
+				_queue = T::schedule_queue();
+		}
+
+		static unsigned int current_queue() { return Machine::cpu_id(); }
+
+		const unsigned int queue() const { return _queue; }
+	};
 }
 
 
@@ -128,6 +157,7 @@ class Scheduler: public Scheduling_Queue<T>
 {
 private:
     typedef Scheduling_Queue<T> Base;
+    double _waiting_time[T::Criterion::QUEUES];
 
 public:
     typedef typename T::Criterion Criterion;
@@ -151,25 +181,33 @@ public:
     void insert(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::insert(" << obj << ")" << endl;
 
+        update_waiting_time(obj);
         Base::insert(obj->link());
     }
 
     T * remove(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::remove(" << obj << ")" << endl;
 
-        return Base::remove(obj->link()) ? obj : 0;
+        if(Base::remove(obj->link())){
+        	update_waiting_time(obj, false);
+        	return obj;
+        } else {
+        	return 0;
+        }
     }
 
     void suspend(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::suspend(" << obj << ")" << endl;
 
         Base::remove(obj->link());
+        update_waiting_time(obj, false);
     }
 
     void resume(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::resume(" << obj << ")" << endl;
 
         Base::insert(obj->link());
+        update_waiting_time(obj);
     }
 
     T * choose() {
@@ -202,6 +240,36 @@ public:
 
         return obj;
     }
+
+    void update_waiting_time(T* obj, bool update_object = true){
+    	unsigned int queue = obj->link()->rank().queue();
+    	_waiting_time[queue] = ((double)100 / (double)size_without_idle(queue)) - (double)100;
+    	if(update_object){
+    		obj->update_waiting_time(_waiting_time[queue]);
+    	}
+    }
+
+    unsigned int size_without_idle(unsigned int queue) {
+    	if(Base::_list[queue].empty()){
+    		return 0;
+    	} else{
+    		return Base::_list[queue].size() - 1;
+    	}
+    }
+
+    unsigned int queue_min_size() const {
+		double min = 1;
+		unsigned int queue = 0;
+
+		for(unsigned int i = 0; i < T::Criterion::QUEUES; i++) {
+			if(min > _waiting_time[i]){
+				min = _waiting_time[i];
+				queue = i;
+			}
+		}
+
+		return queue;
+	}
 
     T* chosen_from_list(unsigned int list){
     	return Base::_list[list].chosen()->object();
