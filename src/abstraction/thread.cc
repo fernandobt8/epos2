@@ -49,7 +49,7 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
         // stats.last_waittime(Scheduler_Timer::tick_count());
         // stats.total_waittime(Scheduler_Timer::tick_count());
         // stats.waiting_since(_timer->read());
-        stats.waiting_start();
+        // stats.waiting_start();
         cutucao(this);
     } else
         if((_state == RUNNING) || (_link.rank() == IDLE)) // Keep interrupts disabled during init_first()
@@ -421,23 +421,28 @@ prejudicada na próxima execução.
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
 
-    Count count = _timer->read();
+    Count count = 0;
     if(charge) {
         if(Criterion::timed)
-            _timer->reset();
+            count = _timer->reset_and_count();
     }
 
     // Accounting the runtime.
     // Don't care if prev != next, because at exit(), prev==next and we still need to account that.
     if ((prev->_state == RUNNING || prev->_state == FINISHING) && prev->_link.rank() != IDLE){
+        prev->stats.last_runtime(count);
         prev->stats.total_runtime(count);
+        // db<Thread>(TRC) << "Count: " << count << endl;
+        // db<Thread>(TRC) << "TID: " << prev << " | " << "History size: " << 
+            // prev->stats.relative_size() << " | Relative_total_time: " << 
+            // prev->stats.relative_total_runtime() << endl;
     }
 
     // Accounting the waiting time.
-    if (next->_state == READY && next->_link.rank() != IDLE) {
-        next->stats.waiting_stop();
-        next->stats.waiting_update();
-    }
+    // if (next->_state == READY && next->_link.rank() != IDLE) {
+    //     next->stats.waiting_stop();
+    //     next->stats.waiting_update();
+    // }
 
     if(prev != next) {
 
@@ -446,8 +451,8 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             
         next->_state = RUNNING;
 
-        if (prev->_state == READY)
-            prev->stats.waiting_start();
+        // if (prev->_state == READY)
+            // prev->stats.waiting_start();
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
         db<Thread>(INF) << "prev={" << prev << ",ctx=" << *prev->_context << "}" << endl;

@@ -283,6 +283,15 @@ public:
     void frequency(const Hertz & f) { _initial = FREQUENCY / f; reset(); }
 
     Tick read() { return _current[Machine::cpu_id()]; }
+    // Tick tick_count() { 
+    //     db<Thread>(TRC) << "ROLA: { Current=" << _current[Machine::cpu_id()] << " , Initial:" <<  _initial
+    //                     << "}" << endl;
+    //     return _initial - _current[Machine::cpu_id()]; 
+    // }
+
+    int reset_and_count() {
+        return (reset() * _initial) / 100;
+    }
 
     int reset() {
         db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
