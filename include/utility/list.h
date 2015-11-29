@@ -1219,6 +1219,17 @@ public:
 		return queue;
     }
 
+    unsigned int queue_min_rank() const {
+    		unsigned int min = -1;
+
+    		for(unsigned int i = 0; i < Q; i++)
+    			if(min < _list[i].chosen().rank){
+    				min = _list[i].chosen().rank;
+    			}
+
+    		return min;
+        }
+
     unsigned int total_size() const {
         unsigned int s = 0;
         for(unsigned int i = 0; i < Q; i++)

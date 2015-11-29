@@ -119,6 +119,13 @@ void Thread::priority(const Priority & c)
     }
 }
 
+void Thread::redefine_priority(){
+	this->_link.rank = stats.total_runtime();
+	if(maxRuntime < this->_link.rank){
+		maxRuntime = this->_link.rank;
+	}
+}
+
 
 int Thread::join()
 {

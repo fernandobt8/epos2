@@ -87,6 +87,8 @@ public:
     const volatile Priority & priority() const { return _link.rank(); }
     void priority(const Priority & p);
 
+    void redefine_priority();
+    void Thread::update_min_runtime() { minRuntime = _scheduler.queue_min_rank(); }
     int join();
     void pass();
     void suspend() { suspend(false); }
@@ -168,6 +170,8 @@ protected:
 
     // Accounting
     Accounting<Count> stats;
+    static volatile unsigned int maxRuntime;
+    static volatile unsigned int minRuntime;
 };
 
 
