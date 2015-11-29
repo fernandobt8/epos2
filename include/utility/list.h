@@ -1256,7 +1256,7 @@ public:
         return _list[e->rank().queue()].choose(e);
     }
 
-private:
+protected:
     L _list[Q];
 };
 

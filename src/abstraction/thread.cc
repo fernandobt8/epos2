@@ -15,6 +15,7 @@ __BEGIN_SYS
 // Class attributes
 volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
+Rebalancer_Timer * Thread::_rebalancer_timer;
 Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
 Thread::List Thread::toSuspend[Thread::Criterion::QUEUES];
@@ -336,6 +337,30 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
     lock();
 
     reschedule();
+}
+
+void Thread::rebalance_handler(const IC::Interrupt_Id & i)
+{
+//	lock();
+//	Thread* prev = _scheduler.head()->object();
+//	int chosen_list = -1;
+//	unsigned int min = 0;
+//	for(unsigned int i = 0; i < Criterion::QUEUES; i++){
+//		if(prev->queue() != i){
+//			Thread* other = _scheduler.chosen_from_list(i);
+//			if(min > other->stats.total_runtime()){
+//				chosen_list = i;
+//				min = other->stats.total_runtime();
+//			}
+//		}
+//	}
+//	if(prev->stats.total_runtime() < min - QUANTUM){
+//		//fazer calculo de prioridade na proxima fila
+//		//prev->_link->rank(Criterion(NORMAL, chosen_list));
+//		//_scheduler.insert(prev);
+//	}
+//	db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
+//	unlock();
 }
 
 void Thread::reschedule_handler(const IC::Interrupt_Id & i)

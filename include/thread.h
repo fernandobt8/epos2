@@ -31,6 +31,7 @@ protected:
     static const bool reboot = Traits<System>::reboot;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
+    static const unsigned int REBALANCER_QUANTUM = Traits<Thread>::REBALANCER_QUANTUM;
     static const unsigned int STACK_SIZE = Traits<Application>::STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
@@ -100,14 +101,8 @@ public:
 
     unsigned int queue() { return link()->rank().queue(); }
 
-    static unsigned int schedule_queue(int priority) {
-		unsigned int queue;
-		if(priority == IDLE || priority == MAIN)
-			queue = Machine::cpu_id();
-		else
-			queue = _scheduler.queue_min_size();
-
-		return queue;
+    static unsigned int schedule_queue() {
+    	return _scheduler.queue_min_size();
     }
 
 protected:
@@ -151,6 +146,7 @@ protected:
 
 private:
     static void init();
+    static void rebalance_handler(const IC::Interrupt_Id &);
     static void reschedule_handler(const IC::Interrupt_Id &);
     static void suspend_handler(const IC::Interrupt_Id &);
     static void cutucao(Thread *);
@@ -165,6 +161,7 @@ protected:
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
+    static Rebalancer_Timer * _rebalancer_timer;
     static Scheduler<Thread> _scheduler;
     static Spin _lock;
     static List toSuspend [];
