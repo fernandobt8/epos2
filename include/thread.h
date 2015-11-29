@@ -94,12 +94,15 @@ public:
 
     Count runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
 
-    void update_waiting_time(double waiting_time) { };
     static Thread * volatile self() { return running(); }
     static void yield();
     static void exit(int status = 0);
 
     unsigned int queue() { return link()->rank().queue(); }
+
+    void update_waiting_time(double waiting_time) {
+    	stats.add_history(waiting_time);
+    };
 
     static unsigned int schedule_queue() {
     	return _scheduler.queue_min_size();

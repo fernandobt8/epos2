@@ -242,14 +242,19 @@ public:
     }
 
     void update_waiting_time(T* obj, bool update_object = true){
-    	unsigned int queue = obj->link()->rank().queue();
-    	_waiting_time[queue] = ((double)100 / (double)size_without_idle(queue)) - (double)100;
-    	if(update_object){
-    		obj->update_waiting_time(_waiting_time[queue]);
+    	if(obj->link()->rank() == Criterion::IDLE || obj->link()->rank() == Criterion::MAIN){
+			unsigned int queue = obj->link()->rank().queue();
+			double size = size_without_idle(queue);
+			if(size > 0){
+				_waiting_time[queue] = ((double)100 / size) - (double)100;
+				if(update_object){
+					obj->update_waiting_time(_waiting_time[queue]);
+				}
+			}
     	}
     }
 
-    unsigned int size_without_idle(unsigned int queue) {
+    double size_without_idle(unsigned int queue) {
     	if(Base::_list[queue].empty()){
     		return 0;
     	} else{
