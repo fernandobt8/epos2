@@ -28,6 +28,7 @@ void Thread::constructor_prolog(unsigned int stack_size)
     _thread_count++;
     _scheduler.insert(this);
 
+
     _stack = new (SYSTEM) char[stack_size];
 }
 
@@ -416,25 +417,22 @@ prejudicada na próxima execução.
 */
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
-
-    Count count = 0;
+    Count count = _timer->tick_count();
     if(charge) {
         if(Criterion::timed)
-            count = _timer->reset_and_count();
+            _timer->reset();
     }
 
     // Accounting the runtime.
     // Don't care if prev != next, because at exit(), prev==next and we still need to account that.
-    if ((prev->_state == RUNNING || prev->_state == FINISHING) && prev->_link.rank() != IDLE){
-        prev->stats.last_runtime(count);
+    if (prev->link()->rank() != MAIN || prev->link()->rank() != IDLE){
+        //prev->stats.last_runtime(count);
         prev->stats.total_runtime(count);
     }
 
     if(prev != next) {
-
         if(prev->_state == RUNNING)
             prev->_state = READY;
-            
         next->_state = RUNNING;
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;

@@ -123,7 +123,13 @@ template<> struct Traits<Thread>: public Traits<void>
     static const unsigned int QUANTUM = 10000; // us
     static const unsigned int REBALANCER_QUANTUM = QUANTUM * 5;
 
+
     static const bool trace_idle = hysterically_debugged;
+};
+
+template<> struct Traits<Accounting>: public Traits<void>
+{
+    static const unsigned int MAX_HISTORY = 10;
 };
 
 template<> struct Traits<Scheduler<Thread>>: public Traits<void>
