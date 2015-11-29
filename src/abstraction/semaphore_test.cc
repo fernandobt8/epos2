@@ -103,8 +103,9 @@ int main()
         table.unlock();
     }
 
-    // Printing statistics (only a single CPU will print this)
+     // Printing statistics (only a single CPU will print this)
     typedef Timer::Tick Count;
+    cout << "\n\nRuntime of each philosopher:\n" << endl;
     for (int i = 0; i < 5; i++) {
         Count thread_runtime = 0;
         table.lock();
@@ -116,6 +117,22 @@ int main()
             cout << "| " << cpu_id << ": " << ts_per_cpu << "  ";
         }
         cout << "| T: " << thread_runtime << endl;
+        
+        table.unlock();
+    }
+
+    cout << "\n\nWait time of each philosopher (not precise) :\n" << endl;
+    for (int i = 0; i < 5; i++) {
+        Count thread_waittime = 0;
+        table.lock();
+
+        cout << "Philosopher " << i << "  ";
+        for (int cpu_id = 0; cpu_id < Traits<Build>::CPUS; cpu_id++) {
+            Count ts_per_cpu = phil[i]->waittime_at(cpu_id);
+            thread_waittime += ts_per_cpu;
+            cout << "| " << cpu_id << ": " << ts_per_cpu << "  ";
+        }
+        cout << "| T: " << thread_waittime << endl;
         
         table.unlock();
     }
