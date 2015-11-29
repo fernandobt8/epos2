@@ -62,7 +62,8 @@ public:
 
     // Thread Configuration
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE)
+    	Criterion init_c = set_initial_priority();
+        Configuration(const State & s = READY, const Criterion & c = init_c, unsigned int ss = STACK_SIZE)
         : state(s), criterion(c), stack_size(ss) {}
 
         State state;
@@ -87,6 +88,8 @@ public:
     const volatile Priority & priority() const { return _link.rank(); }
     void priority(const Priority & p);
 
+    void redefine_priority();
+    unsigned int set_initial_priority();
     int join();
     void pass();
     void suspend() { suspend(false); }
@@ -168,6 +171,8 @@ protected:
 
     // Accounting
     Accounting<Count> stats;
+    static volatile unsigned int maxRuntime;
+    static volatile unsigned int minRuntime;
 };
 
 

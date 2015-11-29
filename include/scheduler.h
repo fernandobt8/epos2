@@ -111,9 +111,33 @@ namespace Scheduling_Criteria
 
 		const unsigned int queue() const { return _queue; }
 	};
+
+    template<typename T>
+        class CFSAffinity: public Priority
+    	{
+    	public:
+    		enum {
+    			MAIN   = 0,
+    			NORMAL = define_normal(),
+    			IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+    		};
+
+    		static const bool timed = true;
+    		static const bool dynamic = false;
+    		static const bool preemptive = true;
+    		static const unsigned int QUEUES = Traits<Machine>::CPUS;
+    		unsigned int _queue;
+
+    	public:
+    		CFSAffinity(int p = NORMAL): Priority(p), _queue(T::schedule_queue(p)) {}
+
+      		static unsigned int current_queue() { return Machine::cpu_id(); }
+
+      		const unsigned int queue() const { return _queue; }
+
+    		static unsigned int define_normal() { return Thread::maxRuntime!=Thread::minRuntime ? (Thread::maxRuntime+Thread::minRuntime)/2 : Thread::maxRuntime; }
+    	};
 }
-
-
 // Scheduling_Queue
 template<typename T, typename R = typename T::Criterion>
 class Scheduling_Queue: public Scheduling_Multilist<T> {};
@@ -131,7 +155,7 @@ private:
 
 public:
     typedef typename T::Criterion Criterion;
-    typedef Scheduling_List<T, Criterion> Queue;
+    typedef Relative_List<T, Criterion> Queue;
     typedef typename Queue::Element Element;
 
 public:
