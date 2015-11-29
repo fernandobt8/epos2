@@ -93,7 +93,6 @@ public:
     void resume();
 
     Count runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
-    Count waittime_at(int cpu_id) { return stats.wait_at(cpu_id); }
 
     void update_waiting_time(double waiting_time) { };
     static Thread * volatile self() { return running(); }
