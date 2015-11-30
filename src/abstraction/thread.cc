@@ -347,42 +347,42 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
 
 void Thread::rebalance_handler(const IC::Interrupt_Id & i)
 {
-	if(_scheduler.size() <= 2){
-		return;
-	}
-	lock();
+	// if(_scheduler.size() <= 2){
+	// 	return;
+	// }
+	// lock();
 
-	double my_waiting = _scheduler.get_waiting_time();
-	double min = 10;
-	unsigned int queue = 0;
-	for(unsigned int i = 0; i < Criterion::QUEUES; i++){
-		if(Machine::cpu_id() != i){
-			double aux = _scheduler.get_waiting_time(i);
-			if(aux < min){
-				min = aux;
-				queue = i;
-			}
-		}
-	}
+	// double my_waiting = _scheduler.get_waiting_time();
+	// double min = 10;
+	// unsigned int queue = 0;
+	// for(unsigned int i = 0; i < Criterion::QUEUES; i++){
+	// 	if(Machine::cpu_id() != i){
+	// 		double aux = _scheduler.get_waiting_time(i);
+	// 		if(aux < min){
+	// 			min = aux;
+	// 			queue = i;
+	// 		}
+	// 	}
+	// }
 
-	if(min + 0.26 <= my_waiting){
-		S_Element* aux = _scheduler.head();
-		double max = 0;
-		Thread* chosen = aux->object();
-		while(!aux) {
-			double media = aux->object()->stats.history_media();
-			if(media > max) {
-				chosen = aux->object();
-				max = media;
-			}
-			aux = aux->next();
-		}
-		chosen->link()->rank(Criterion(min * 100, queue));
-		_scheduler.insert(chosen);
+	// if(min + 0.26 <= my_waiting){
+	// 	S_Element* aux = _scheduler.head();
+	// 	double max = 0;
+	// 	Thread* chosen = aux->object();
+	// 	while(!aux) {
+	// 		double media = aux->object()->stats.history_media();
+	// 		if(media > max) {
+	// 			chosen = aux->object();
+	// 			max = media;
+	// 		}
+	// 		aux = aux->next();
+	// 	}
+	// 	chosen->link()->rank(Criterion(min * 100, queue));
+	// 	_scheduler.insert(chosen);
 
-	}
-	db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
-	unlock();
+	// }
+	// db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
+	// unlock();
 }
 
 void Thread::reschedule_handler(const IC::Interrupt_Id & i)

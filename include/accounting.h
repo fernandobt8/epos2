@@ -72,7 +72,8 @@ public:
 	void wait_cron_stop() { 
 		_wait_cron.stop(); 
 		_wait_cron_running = false;
-		_wait_history.insert_head(new (SYSTEM) Element(_wait_cron.read_ticks()));
+		T my_value = _wait_cron.read_ticks();
+		_wait_history.insert_head(new (SYSTEM) Element(&my_value));
 		if(_wait_history.size() >= MAX_HISTORY){
 			_wait_history.remove_tail();
 		}
@@ -87,7 +88,8 @@ public:
 	void runtime_cron_stop() { 
 		_runtime_cron.stop(); 
 		_runtime_cron_running = false;
-		_runtime_history.insert_head(new (SYSTEM) Element(_runtime_cron.read_ticks()));
+		T my_value = _runtime_cron.read_ticks();
+		_runtime_history.insert_head(new (SYSTEM) Element(&my_value));
 		if(_runtime_history.size() >= MAX_HISTORY){
 			_runtime_history.remove_tail();
 		}
@@ -116,8 +118,7 @@ public:
 
 	T wait_history_media(){
 		T media = 0;
-		typename Element* e = 0;
-		for(e = _wait_history.head(); e != 0; e = e->next()){
+		for(Element* e  = _wait_history.head(); e != 0; e = e->next()){
 			media += *e->object();
 		}
 
@@ -135,7 +136,7 @@ public:
 
 	T runtime_history_media() {
 		T media = 0;
-		for (typename Element* e = _runtime_history.head(); e; e = e->next()) {
+		for (Element* e = _runtime_history.head(); e; e = e->next()) {
 			media += *e->object();
 		}
 
