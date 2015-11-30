@@ -284,6 +284,10 @@ public:
 
     Tick read() { return _current[Machine::cpu_id()]; }
 
+    Tick reset_and_count() {
+        return (reset() * _initial) / 100;
+    }
+
     Tick tick_count() {
 		return _initial - _current[Machine::cpu_id()];
     }

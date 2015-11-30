@@ -122,15 +122,15 @@ template<> struct Traits<Thread>: public Traits<void>
     typedef Scheduling_Criteria::CFSAffinity<Thread> Criterion;
     static const unsigned int QUANTUM = 10000; // us
     static const unsigned int REBALANCER_QUANTUM = QUANTUM * 5;
-
+    static const unsigned int ACCOUNTING_MAX_HISTORY = 3;
 
     static const bool trace_idle = hysterically_debugged;
 };
 
-template<> struct Traits<Accounting>: public Traits<void>
-{
-    static const unsigned int MAX_HISTORY = 10;
-};
+// template<> struct Traits<Accounting>: public Traits<void>
+// {
+//     static const unsigned int MAX_HISTORY = 10;
+// };
 
 template<> struct Traits<Scheduler<Thread>>: public Traits<void>
 {

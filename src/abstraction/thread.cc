@@ -46,6 +46,14 @@ void Thread::constructor_epilog(const Log_Addr & entry, unsigned int stack_size)
     if((_state != READY) && (_state != RUNNING))
         _scheduler.suspend(this);
 
+    /* Don't care if IDLE thread was created right now, the priority will be normalized 
+       within the time. 
+    */
+    if (_state == RUNNING)
+        stats.runtime_cron_start();
+    else if (_state == READY)
+        stats.wait_cron_start();
+
     if(preemptive && (_state == READY) && (_link.rank() != IDLE)) {
         cutucao(this);
     } else
@@ -433,18 +441,13 @@ prejudicada na próxima execução.
 */
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
-    Count count = _timer->tick_count();
+    // Count count = _timer->tick_count();
     if(charge) {
         if(Criterion::timed)
             _timer->reset();
     }
 
-    // Accounting the runtime.
-    // Don't care if prev != next, because at exit(), prev==next and we still need to account that.
-    if (prev->link()->rank() != MAIN || prev->link()->rank() != IDLE){
-        //prev->stats.last_runtime(count);
-        prev->stats.total_runtime(count);
-    }
+    
 
     if(prev != next) {
         if(prev->_state == RUNNING)
@@ -452,8 +455,18 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         next->_state = RUNNING;
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
-        db<Thread>(INF) << "prev={" << prev << ",ctx=" << *prev->_context << "}" << endl;
-        db<Thread>(INF) << "next={" << next << ",ctx=" << *next->_context << "}" << endl;
+
+        // Accounting the waiting time.
+        next->stats.wait_cron_stop();
+        prev->stats.wait_cron_start();
+
+        // Accounting the runtime.
+        prev->stats.runtime_cron_stop();
+        prev->stats.last_runtime(prev->stats.runtime_cron_ticks()); // updating last_runtime + total_runtime
+        next->stats.runtime_cron_start();
+
+        db<Thread>(TRC) << "[prev!=next] TID: " << prev << " | Wait Media: " << prev->stats.wait_history_media() << " | Runtime Media: " << 
+            prev->stats.runtime_history_media() << " | State: " << prev->_state << endl;
 
         if(smp)
             _lock.release(); // Note that releasing the lock here, even with interrupts disabled, allows for another CPU to select "prev".
@@ -462,9 +475,25 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                              // then unlocking must be moved into the mediator. For x86 and ARM it doesn't seam to be the case.
 
         CPU::switch_context(&prev->_context, next->_context);
-    } else
+    } else {
+
+        /* Preemption will occur and then prev == next, because there's only a single thread in the queue.
+         We still need to measure the running time of this thread [and assert that wait_cron is not running].
+        */
+        assert(!prev->stats.wait_cron_running());
+        assert(prev->stats.runtime_cron_running());
+        
+        // Saving the current values to Accounting.
+        prev->stats.runtime_cron_stop();
+        prev->stats.last_runtime(prev->stats.runtime_cron_ticks()); // updating last_runtime + total_runtime
+        prev->stats.runtime_cron_start();
+
+        db<Thread>(TRC) << "[prev==next] TID: " << prev << " | Wait Media: " << prev->stats.wait_history_media() << " | Runtime Media: " << 
+            prev->stats.runtime_history_media() << " | State: " << prev->_state << endl;
+
         if(smp)
             _lock.release();
+    }
 
     CPU::int_enable();
 }

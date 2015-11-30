@@ -14,66 +14,147 @@ template<typename T> // T should be Time_Stamp, Tick or something like that.
 class Accounting
 {
 
-public:
-   	typedef Simple_List<double> List;
-   	typedef List::Element Element;
+protected:
+	static const unsigned int MAX_HISTORY = Traits<Thread>::ACCOUNTING_MAX_HISTORY;
 
-   	static unsigned int MAX_HISTORY = Traits<Accounting>::MAX_HISTORY;
+public:
+	typedef Simple_List<T> List;
+   	typedef typename List::Element Element;
 
 	Accounting() {
 		_last_runtime = 0;
 		_created_at = Machine::cpu_id();
+		_wait_cron_running = false;
+		_runtime_cron_running = false;
 
 		for(unsigned int i = 0; i < Traits<Build>::CPUS; i++) {
 			_total_runtime[i] = 0;
 		}
    	}
 
-	int created_at() { return _created_at; }
+	int created_at() { 
+		return _created_at; 
+	}
    	
    	// Runtime related to the current CPU
-	T last_runtime() { return _last_runtime; }
-
-	void last_runtime(T ts) { _last_runtime += ts; }
-
-	// Runtime related to all CPUs
-	T runtime_at(int cpu_id) { return _total_runtime[cpu_id]; }
-
-	void total_runtime(T ts) { _total_runtime[Machine::cpu_id()] += ts; }
-
-	T total_runtime() {
-		T runtime = 0;
-		for (unsigned int i = 0; i < Traits<Build>::CPUS; i++) 
-			runtime += _total_runtime[i];
-		return runtime;
+	T last_runtime() { 
+		return _last_runtime;
 	}
 
-	// History
-	List history() { return _history; }
+	void last_runtime(T ts) {
+		_last_runtime = ts;
+		_total_runtime[Machine::cpu_id()] += ts;
+	}
 
-	double history_head() { return _history.head()->object(); }
+	// Runtime related to all CPUs
+	T total_runtime_at(int cpu_id) {
+		return _total_runtime[cpu_id];
+	}
 
-	void add_history(double value) {
-		_history.insert_head(new (SYSTEM) Element(&value));
-		if(_history.size() >= MAX_HISTORY){
-			_history.remove_tail();
+	// void total_runtime(T ts) { 
+	// 	_total_runtime[Machine::cpu_id()] += ts; 
+	// }
+
+	// T total_runtime() {
+	// 	T runtime = 0;
+	// 	for (unsigned int i = 0; i < Traits<Build>::CPUS; i++) 
+	// 		runtime += _total_runtime[i];
+	// 	return runtime;
+	// }
+
+	// Wait-time related to the current CPU
+	void wait_cron_start() { 
+		_wait_cron.reset(); 
+		_wait_cron.start();
+		_wait_cron_running = true;
+	}
+	
+	void wait_cron_stop() { 
+		_wait_cron.stop(); 
+		_wait_cron_running = false;
+		_wait_history.insert_head(new (SYSTEM) Element(_wait_cron.read_ticks()));
+		if(_wait_history.size() >= MAX_HISTORY){
+			_wait_history.remove_tail();
 		}
 	}
 
-	double history_media(){
-		double media = 0;
-		for(Element* e = _history.head(); e; e = e->next()){
+	void runtime_cron_start() { 
+		_runtime_cron.reset(); 
+		_runtime_cron.start();
+		_runtime_cron_running = true; 
+	}
+	
+	void runtime_cron_stop() { 
+		_runtime_cron.stop(); 
+		_runtime_cron_running = false;
+		_runtime_history.insert_head(new (SYSTEM) Element(_runtime_cron.read_ticks()));
+		if(_runtime_history.size() >= MAX_HISTORY){
+			_runtime_history.remove_tail();
+		}
+	}
+	
+	void wait_cron_running() { 
+		return _wait_cron_running; 
+	}
+
+	void runtime_cron_running() {
+		return _runtime_cron_running;
+	}
+	
+	T wait_cron_ticks() { 
+		return _wait_cron.read_ticks(); 
+	}
+
+	T runtime_cron_ticks() {
+		return _runtime_cron.read_ticks();
+	}
+
+	// Wait-time history
+	List wait_history() { return _wait_history; }
+
+	T wait_history_head() { return _wait_history.head()->object(); }
+
+	T wait_history_media(){
+		T media = 0;
+		typename Element* e = 0;
+		for(e = _wait_history.head(); e != 0; e = e->next()){
 			media += *e->object();
 		}
 
-		return media / _history.size();
+		return media / _wait_history.size();
 	}
+
+	// Runtime history
+	List runtime_history() { 
+		return _runtime_history; 
+	}
+
+	T runtime_history_head() { 
+		return _runtime_history.head()->object(); 
+	}
+
+	T runtime_history_media() {
+		T media = 0;
+		for (typename Element* e = _runtime_history.head(); e; e = e->next()) {
+			media += *e->object();
+		}
+
+		return media / _runtime_history.size();
+	}	
 
 private:
 	T _last_runtime;
 	T _total_runtime[Traits<Build>::CPUS];
 	
-	List _history;
+	// Account the history of waits and runs (account only MAX_HISTORY data)
+	List _wait_history;
+	List _runtime_history;
+
+	Chronometer _wait_cron;
+	Chronometer _runtime_cron;
+	bool _wait_cron_running;
+	bool _runtime_cron_running;
+
 	int _created_at; // At which CPU this resource was created
 
 };

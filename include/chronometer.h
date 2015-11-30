@@ -28,9 +28,7 @@ public:
     void stop() { lap(); }
 
     Microsecond read() { return ticks() * 1000000 / frequency(); }
-
-    // This ISN'T the correct approach. Just using this to make more human-readable.
-    Hertz read_ticks() { return ticks() / frequency(); } 
+    Time_Stamp read_ticks() { return ticks(); } 
 
 private:
     Time_Stamp ticks() {

@@ -10,6 +10,7 @@
 #include <system.h>
 #include <scheduler.h>
 #include <ic.h>
+#include <tsc.h>
 #include <accounting.h>
 
 extern "C" { void __exit(); }
@@ -74,7 +75,7 @@ public:
     typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
     typedef Scheduler<Thread>::Element S_Element;
     typedef Simple_List<Thread> List;
-    typedef Timer::Tick Count;
+    typedef TSC::Time_Stamp Count;
 
 public:
     template<typename ... Tn>
@@ -93,7 +94,7 @@ public:
     void suspend() { suspend(false); }
     void resume();
 
-    Count runtime_at(int cpu_id) { return stats.runtime_at(cpu_id); }
+    Count runtime_at(int cpu_id) { return stats.total_runtime_at(cpu_id); }
 
     static Thread * volatile self() { return running(); }
     static void yield();
@@ -102,8 +103,8 @@ public:
     unsigned int queue() { return link()->rank().queue(); }
 
     void update_waiting_time(double waiting_time) {
-    	stats.add_history(waiting_time);
-    };
+    	// stats.add_history(waiting_time);
+    }
 
     static unsigned int schedule_queue() {
     	return _scheduler.queue_min_size();
