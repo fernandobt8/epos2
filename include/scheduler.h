@@ -276,6 +276,21 @@ public:
 		return queue;
 	}
 
+    T*  maxWaitTime(unsigned int list){ //retorna o elemento com maior waitTime, e que deve ser migrado ;)
+    	double max = 0;
+    	T* maxW = 0;
+    	unsigned int siz =  Base::_list[list].size();
+    	T* element = Base::_list[list].head();
+    	for(unsigned int i = 1 ;i < siz;i++){
+    		if(max < element.rank()){
+    			max = element.rank();
+    			maxW = element;
+    		}
+    		element = element.next();
+    	}
+    	return maxW;
+    }
+
     T* chosen_from_list(unsigned int list){
     	return Base::_list[list].chosen()->object();
     }
