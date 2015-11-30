@@ -430,6 +430,8 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         prev->stats.total_runtime(count);
     }
 
+    prev->link()->rank() += (100-count);
+
     if(prev != next) {
         if(prev->_state == RUNNING)
             prev->_state = READY;
