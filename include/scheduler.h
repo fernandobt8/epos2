@@ -136,6 +136,10 @@ namespace Scheduling_Criteria
 				_queue = T::schedule_queue();
 		}
 
+		CFSAffinity(int p, unsigned int queue): Priority(p) {
+			_queue = queue;
+		}
+
 		static unsigned int current_queue() { return Machine::cpu_id(); }
 
 		const unsigned int queue() const { return _queue; }
@@ -206,8 +210,8 @@ public:
     void resume(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::resume(" << obj << ")" << endl;
 
-        Base::insert(obj->link());
         update_waiting_time(obj);
+        Base::insert(obj->link());
     }
 
     T * choose() {
@@ -242,7 +246,7 @@ public:
     }
 
     void update_waiting_time(T* obj, bool update_object = true){
-    	if(obj->link()->rank() == Criterion::IDLE || obj->link()->rank() == Criterion::MAIN){
+    	if(obj->link()->rank() != Criterion::IDLE && obj->link()->rank() != Criterion::MAIN){
 			unsigned int queue = obj->link()->rank().queue();
 			double size = size_without_idle(queue);
 			if(size > 0){
@@ -254,7 +258,7 @@ public:
     	}
     }
 
-    double size_without_idle(unsigned int queue) {
+    double size_without_idle(unsigned int queue = T::Criterion::current_queue()) {
     	if(Base::_list[queue].empty()){
     		return 0;
     	} else{
@@ -263,7 +267,7 @@ public:
     }
 
     unsigned int queue_min_size() const {
-		double min = 1;
+		double min = 10;
 		unsigned int queue = 0;
 
 		for(unsigned int i = 0; i < T::Criterion::QUEUES; i++) {
@@ -276,7 +280,12 @@ public:
 		return queue;
 	}
 
-    T* chosen_from_list(unsigned int list){
+    double get_waiting_time(unsigned int queue = T::Criterion::current_queue()){
+    	return _waiting_time[queue];
+    }
+
+
+    T* chosen_from_list(unsigned int list = T::Criterion::current_queue()){
     	return Base::_list[list].chosen()->object();
     }
 };

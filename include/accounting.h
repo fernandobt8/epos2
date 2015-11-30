@@ -54,7 +54,7 @@ public:
 	double history_head() { return _history.head()->object(); }
 
 	void add_history(double value) {
-		_history.insert(new (SYSTEM) Element(&value));
+		_history.insert_head(new (SYSTEM) Element(&value));
 		if(_history.size() >= MAX_HISTORY){
 			_history.remove_tail();
 		}

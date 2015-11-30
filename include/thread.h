@@ -72,6 +72,7 @@ public:
 
     // Thread Queue
     typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
+    typedef Scheduler<Thread>::Element S_Element;
     typedef Simple_List<Thread> List;
     typedef Timer::Tick Count;
 
