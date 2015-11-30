@@ -28,6 +28,7 @@ void Thread::constructor_prolog(unsigned int stack_size)
     _thread_count++;
     _scheduler.insert(this);
 
+
     _stack = new (SYSTEM) char[stack_size];
 }
 
@@ -338,26 +339,42 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
 
 void Thread::rebalance_handler(const IC::Interrupt_Id & i)
 {
-//	lock();
-//	Thread* prev = _scheduler.head()->object();
-//	int chosen_list = -1;
-//	unsigned int min = 0;
-//	for(unsigned int i = 0; i < Criterion::QUEUES; i++){
-//		if(prev->queue() != i){
-//			Thread* other = _scheduler.chosen_from_list(i);
-//			if(min > other->stats.total_runtime()){
-//				chosen_list = i;
-//				min = other->stats.total_runtime();
-//			}
-//		}
-//	}
-//	if(prev->stats.total_runtime() < min - QUANTUM){
-//		//fazer calculo de prioridade na proxima fila
-//		//prev->_link->rank(Criterion(NORMAL, chosen_list));
-//		//_scheduler.insert(prev);
-//	}
-//	db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
-//	unlock();
+	if(_scheduler.size() <= 2){
+		return;
+	}
+	lock();
+
+	double my_waiting = _scheduler.get_waiting_time();
+	double min = 10;
+	unsigned int queue = 0;
+	for(unsigned int i = 0; i < Criterion::QUEUES; i++){
+		if(Machine::cpu_id() != i){
+			double aux = _scheduler.get_waiting_time(i);
+			if(aux < min){
+				min = aux;
+				queue = i;
+			}
+		}
+	}
+
+	if(min + 0.26 <= my_waiting){
+		S_Element* aux = _scheduler.head();
+		double max = 0;
+		Thread* chosen = aux->object();
+		while(!aux) {
+			double media = aux->object()->stats.history_media();
+			if(media > max) {
+				chosen = aux->object();
+				max = media;
+			}
+			aux = aux->next();
+		}
+		chosen->link()->rank(Criterion(min * 100, queue));
+		_scheduler.insert(chosen);
+
+	}
+	db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
+	unlock();
 }
 
 void Thread::reschedule_handler(const IC::Interrupt_Id & i)
@@ -416,25 +433,22 @@ prejudicada na próxima execução.
 */
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
-
-    Count count = 0;
+    Count count = _timer->tick_count();
     if(charge) {
         if(Criterion::timed)
-            count = _timer->reset_and_count();
+            _timer->reset();
     }
 
     // Accounting the runtime.
     // Don't care if prev != next, because at exit(), prev==next and we still need to account that.
-    if ((prev->_state == RUNNING || prev->_state == FINISHING) && prev->_link.rank() != IDLE){
-        prev->stats.last_runtime(count);
+    if (prev->link()->rank() != MAIN || prev->link()->rank() != IDLE){
+        //prev->stats.last_runtime(count);
         prev->stats.total_runtime(count);
     }
 
     if(prev != next) {
-
         if(prev->_state == RUNNING)
             prev->_state = READY;
-            
         next->_state = RUNNING;
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;

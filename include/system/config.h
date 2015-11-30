@@ -11,7 +11,7 @@
 #define ARCH ia32
 #define MACH pc
 #define MMOD legacy
-#define APPL philosophers_dinner_for_log
+#define APPL philosophers_dinner
 #define __mode_library__
 #define __arch_ia32__
 #define __mach_pc__

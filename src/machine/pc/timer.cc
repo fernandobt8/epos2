@@ -12,10 +12,6 @@ PC_Timer * PC_Timer::_channels[CHANNELS];
 // Class methods
 void PC_Timer::int_handler(const Interrupt_Id & i)
 {
-    if(_channels[REBALANCER] && (--_channels[REBALANCER]->_current[Machine::cpu_id()] <= 0)){
-    	_channels[REBALANCER]->_current[Machine::cpu_id()] = _channels[REBALANCER]->_initial;
-    	_channels[REBALANCER]->_handler(i);
-    }
 
     if(_channels[SCHEDULER] && (--_channels[SCHEDULER]->_current[Machine::cpu_id()] <= 0)) {
         _channels[SCHEDULER]->_current[Machine::cpu_id()] = _channels[SCHEDULER]->_initial;
@@ -25,6 +21,11 @@ void PC_Timer::int_handler(const Interrupt_Id & i)
     if((!Traits<System>::multicore || (Traits<System>::multicore && (Machine::cpu_id() == 0))) && _channels[ALARM]) {
         _channels[ALARM]->_current[0] = _channels[ALARM]->_initial;
         _channels[ALARM]->_handler(i);
+    }
+
+    if(_channels[REBALANCER] && (--_channels[REBALANCER]->_current[Machine::cpu_id()] <= 0)){
+    	_channels[REBALANCER]->_current[Machine::cpu_id()] = _channels[REBALANCER]->_initial;
+    	_channels[REBALANCER]->_handler(i);
     }
 
     if((!Traits<System>::multicore || (Traits<System>::multicore && (Machine::cpu_id() == 0))) && _channels[USER]) {

@@ -288,6 +288,10 @@ public:
         return (reset() * _initial) / 100;
     }
 
+    Tick tick_count() {
+		return _initial - _current[Machine::cpu_id()];
+    }
+
     int reset() {
         db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
         	       << ",h=" << reinterpret_cast<void*>(_handler)

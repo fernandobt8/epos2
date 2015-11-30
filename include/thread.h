@@ -72,6 +72,7 @@ public:
 
     // Thread Queue
     typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
+    typedef Scheduler<Thread>::Element S_Element;
     typedef Simple_List<Thread> List;
     typedef Timer::Tick Count;
 
@@ -99,6 +100,10 @@ public:
     static void exit(int status = 0);
 
     unsigned int queue() { return link()->rank().queue(); }
+
+    void update_waiting_time(double waiting_time) {
+    	stats.add_history(waiting_time);
+    };
 
     static unsigned int schedule_queue() {
     	return _scheduler.queue_min_size();
