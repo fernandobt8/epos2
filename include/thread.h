@@ -102,13 +102,12 @@ public:
 
     unsigned int queue() { return link()->rank().queue(); }
 
-    void update_waiting_time(double waiting_time) {
-    	// stats.add_history(waiting_time);
-    }
-
     static unsigned int schedule_queue() {
     	return _scheduler.queue_min_size();
     }
+
+    // Accounting
+    Accounting<Count> stats;
 
 protected:
     void constructor_prolog(unsigned int stack_size);
@@ -170,9 +169,6 @@ protected:
     static Scheduler<Thread> _scheduler;
     static Spin _lock;
     static List toSuspend [];
-
-    // Accounting
-    Accounting<Count> stats;
 };
 
 

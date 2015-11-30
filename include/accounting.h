@@ -51,17 +51,6 @@ public:
 		return _total_runtime[cpu_id];
 	}
 
-	// void total_runtime(T ts) { 
-	// 	_total_runtime[Machine::cpu_id()] += ts; 
-	// }
-
-	// T total_runtime() {
-	// 	T runtime = 0;
-	// 	for (unsigned int i = 0; i < Traits<Build>::CPUS; i++) 
-	// 		runtime += _total_runtime[i];
-	// 	return runtime;
-	// }
-
 	// Wait-time related to the current CPU
 	void wait_cron_start() { 
 		_wait_cron.reset(); 

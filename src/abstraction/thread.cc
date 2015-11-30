@@ -347,42 +347,42 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
 
 void Thread::rebalance_handler(const IC::Interrupt_Id & i)
 {
-	// if(_scheduler.size() <= 2){
-	// 	return;
-	// }
-	// lock();
+	 if(_scheduler.size() <= 2){
+	 	return;
+	 }
+	 lock();
 
-	// double my_waiting = _scheduler.get_waiting_time();
-	// double min = 10;
-	// unsigned int queue = 0;
-	// for(unsigned int i = 0; i < Criterion::QUEUES; i++){
-	// 	if(Machine::cpu_id() != i){
-	// 		double aux = _scheduler.get_waiting_time(i);
-	// 		if(aux < min){
-	// 			min = aux;
-	// 			queue = i;
-	// 		}
-	// 	}
-	// }
+	 double my_waiting = _scheduler.get_waiting_time();
+	 double min = 10;
+	 unsigned int queue = 0;
+	 for(unsigned int i = 0; i < Criterion::QUEUES; i++){
+	 	if(Machine::cpu_id() != i){
+	 		double aux = _scheduler.get_waiting_time(i);
+	 		if(aux < min){
+	 			min = aux;
+	 			queue = i;
+	 		}
+	 	}
+	 }
 
-	// if(min + 0.26 <= my_waiting){
-	// 	S_Element* aux = _scheduler.head();
-	// 	double max = 0;
-	// 	Thread* chosen = aux->object();
-	// 	while(!aux) {
-	// 		double media = aux->object()->stats.history_media();
-	// 		if(media > max) {
-	// 			chosen = aux->object();
-	// 			max = media;
-	// 		}
-	// 		aux = aux->next();
-	// 	}
-	// 	chosen->link()->rank(Criterion(min * 100, queue));
-	// 	_scheduler.insert(chosen);
+	 if(min + 0.26 <= my_waiting){
+	 	S_Element* aux = _scheduler.head();
+	 	double max = 0;
+	 	Thread* chosen = aux->object();
+	 	while(!aux) {
+	 		double media = aux->object()->stats.history_media();
+	 		if(media > max) {
+	 			chosen = aux->object();
+	 			max = media;
+	 		}
+	 		aux = aux->next();
+	 	}
+	 	chosen->link()->rank(Criterion(min * 100, queue));
+	 	_scheduler.insert(chosen);
 
-	// }
-	// db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
-	// unlock();
+	 }
+	 db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
+	 unlock();
 }
 
 void Thread::reschedule_handler(const IC::Interrupt_Id & i)
@@ -399,46 +399,6 @@ void Thread::cutucao(Thread * needy)
 	unlock();
 }
 
-/*
-
-Aula 25/11/2015.
-
-Quantum = tempo para acontecer uma reavaliação de prioridade. Valor fixo.
-Vamos utilizar prioridades dinâmicas.
-
-mediaHistórica = (mediaHistórica + corrente)/2  
-[ Não faz sentido armazenar a série histórica inteira, armazenar uma quantidade de samples. ] 
-[ Ir para o mais elaborado caso isso não nos satisfaça (não vai nos satisfazer). ]
-
-Afinidade no algoritmo global pode. Mas é muito pior.
-
-Jantar dos Filósofos não é um bom teste p/ testar afinidade de cache 
-(por causa do for que não faz nada e não precisa de nada na cache).
-
-"Bin packing". Resolver como first-fit, worst-fit, best-fit.
-https://en.wikipedia.org/wiki/Bin_packing_problem
-
-| P2         |
-| P0  P1  P3 |  <-- como fazer justiça nesse caso? Tem que ter arrumar, mas alguém vai
-|------------|      ter um pouco de injustiça.
-| C0  C1  C2 |
-
-Fazer justiça por fila de CPU tbm.
-
-C* = CPU
-P* = PROCESS
-
-O erro do TSC é em relação ao timestamp que em um ambiente emulado (QEMU) funciona, pois a instrução
-assembly realizada no QEMU que retorna o TS é mapeada para uma mesma CPU direto do hardware 
-(ou seja, cada CPU lógica do EPOS tem um timestamp compatível com as outras CPUs lógicas 
-[sequencial e posterior]. Não podemos assumir isso, pois em um ambiente real isso não 
-funcionaria). 
-
-CFS é TEMPO DE ESPERA das threads, não tempo que rodou. Se uma thred não aumentou o tempo 
-de espera das demais threads (exemplo: outras threads esperando IO), essa thread não é 
-prejudicada na próxima execução. 
-
-*/
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
     // Count count = _timer->tick_count();
@@ -446,8 +406,6 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         if(Criterion::timed)
             _timer->reset();
     }
-
-    
 
     if(prev != next) {
         if(prev->_state == RUNNING)
@@ -462,6 +420,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
         // Accounting the runtime.
         prev->stats.runtime_cron_stop();
+        //statistics only
         prev->stats.last_runtime(prev->stats.runtime_cron_ticks()); // updating last_runtime + total_runtime
         next->stats.runtime_cron_start();
 
@@ -469,31 +428,12 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             prev->stats.runtime_history_media() << " | State: " << prev->_state << endl;
 
         if(smp)
-            _lock.release(); // Note that releasing the lock here, even with interrupts disabled, allows for another CPU to select "prev".
-                             // The analysis of whether it could get scheduled by another CPU while its context is being saved by CPU::switch_context()
-                             // must focus on the time it takes to save a context and to reschedule a thread. If this gets stringent for a given architecture,
-                             // then unlocking must be moved into the mediator. For x86 and ARM it doesn't seam to be the case.
+            _lock.release();
 
         CPU::switch_context(&prev->_context, next->_context);
-    } else {
-
-        /* Preemption will occur and then prev == next, because there's only a single thread in the queue.
-         We still need to measure the running time of this thread [and assert that wait_cron is not running].
-        */
-        assert(!prev->stats.wait_cron_running());
-        assert(prev->stats.runtime_cron_running());
-        
-        // Saving the current values to Accounting.
-        prev->stats.runtime_cron_stop();
-        prev->stats.last_runtime(prev->stats.runtime_cron_ticks()); // updating last_runtime + total_runtime
-        prev->stats.runtime_cron_start();
-
-        db<Thread>(TRC) << "[prev==next] TID: " << prev << " | Wait Media: " << prev->stats.wait_history_media() << " | Runtime Media: " << 
-            prev->stats.runtime_history_media() << " | State: " << prev->_state << endl;
-
+    } else
         if(smp)
             _lock.release();
-    }
 
     CPU::int_enable();
 }

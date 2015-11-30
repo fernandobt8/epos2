@@ -161,7 +161,6 @@ class Scheduler: public Scheduling_Queue<T>
 {
 private:
     typedef Scheduling_Queue<T> Base;
-    double _waiting_time[T::Criterion::QUEUES];
 
 public:
     typedef typename T::Criterion Criterion;
@@ -185,32 +184,24 @@ public:
     void insert(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::insert(" << obj << ")" << endl;
 
-        update_waiting_time(obj);
         Base::insert(obj->link());
     }
 
     T * remove(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::remove(" << obj << ")" << endl;
 
-        if(Base::remove(obj->link())){
-        	update_waiting_time(obj, false);
-        	return obj;
-        } else {
-        	return 0;
-        }
+        return Base::remove(obj->link()) ? obj : 0;
     }
 
     void suspend(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::suspend(" << obj << ")" << endl;
 
         Base::remove(obj->link());
-        update_waiting_time(obj, false);
     }
 
     void resume(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::resume(" << obj << ")" << endl;
 
-        update_waiting_time(obj);
         Base::insert(obj->link());
     }
 
@@ -245,43 +236,21 @@ public:
         return obj;
     }
 
-    void update_waiting_time(T* obj, bool update_object = true){
-    	if(obj->link()->rank() != Criterion::IDLE && obj->link()->rank() != Criterion::MAIN){
-			unsigned int queue = obj->link()->rank().queue();
-			double size = size_without_idle(queue);
-			if(size > 0){
-				_waiting_time[queue] = ((double)100 / size) - (double)100;
-				if(update_object){
-					obj->update_waiting_time(_waiting_time[queue]);
-				}
-			}
-    	}
-    }
-
-    double size_without_idle(unsigned int queue = T::Criterion::current_queue()) {
-    	if(Base::_list[queue].empty()){
-    		return 0;
-    	} else{
-    		return Base::_list[queue].size() - 1;
-    	}
-    }
-
     unsigned int queue_min_size() const {
-		double min = 10;
-		unsigned int queue = 0;
+    	unsigned int min = -1;
+		unsigned int queue = -1;
 
-		for(unsigned int i = 0; i < T::Criterion::QUEUES; i++) {
-			if(min > _waiting_time[i]){
-				min = _waiting_time[i];
+		for(unsigned int i = 0; i < Q; i++)
+			if(min > _list[i].size()){
+				min = _list[i].size();
 				queue = i;
 			}
-		}
 
 		return queue;
 	}
 
     double get_waiting_time(unsigned int queue = T::Criterion::current_queue()){
-    	return _waiting_time[queue];
+    	return 0;
     }
 
 
