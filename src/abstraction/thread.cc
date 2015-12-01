@@ -347,39 +347,41 @@ void Thread::time_slicer(const IC::Interrupt_Id & i)
 
 void Thread::rebalance_handler(const IC::Interrupt_Id & i)
 {
-	 if(_scheduler.size() <= 2){
+	 lock();
+	 if(_scheduler.size() <= 1){
+		unlock();
 	 	return;
 	 }
-	 lock();
 
-	 double my_waiting = _scheduler.get_waiting_time();
-	 double min = 10;
+	 Count my_idle = _scheduler.get_idle()->stats.runtime_history_media();
+	 Count max = 0;
 	 unsigned int queue = 0;
 	 for(unsigned int i = 0; i < Criterion::QUEUES; i++){
 	 	if(Machine::cpu_id() != i){
-	 		double aux = _scheduler.get_waiting_time(i);
-	 		if(aux < min){
-	 			min = aux;
+	 		Count aux = _scheduler.get_idle(i)->stats.runtime_history_media();
+	 		if(aux > max){
+	 			max = aux;
 	 			queue = i;
 	 		}
 	 	}
 	 }
 
-	 if(min + 0.26 <= my_waiting){
+	 //maior distancia entre my_idle e max menor a porcentagem
+	 if((double)my_idle / (double)max <= 0.5){
 	 	S_Element* aux = _scheduler.head();
-	 	double max = 0;
-	 	Thread* chosen = aux->object();
-	 	while(!aux) {
-	 		double media = aux->object()->stats.history_media();
-	 		if(media > max) {
-	 			chosen = aux->object();
-	 			max = media;
+	 	Thread* chosen = 0;
+	 	max = 0;
+	 	do{
+	 		Count temp = aux->object()->wait_history_media();
+	 		if(aux->object()->criterion() != IDLE && temp > max){
+				chosen = aux->object();
+				max = temp;
 	 		}
 	 		aux = aux->next();
-	 	}
-	 	chosen->link()->rank(Criterion(min * 100, queue));
-	 	_scheduler.insert(chosen);
+	 	}while(!aux);
 
+	 	chosen->link()->rank(Criterion(max, queue));
+	 	_scheduler.insert(chosen);
 	 }
 	 db<void>(TRC) << "re running: " << running() << " prev: " << prev << " q: " << prev->queue() << " nq: " << chosen_list << endl;
 	 unlock();
@@ -414,14 +416,16 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
 
-        // Accounting the waiting time.
-        next->stats.wait_cron_stop();
-        prev->stats.wait_cron_start();
-
         // Accounting the runtime.
+        prev->stats.wait_cron_start();
         prev->stats.runtime_cron_stop();
-        //statistics only
         prev->stats.last_runtime(prev->stats.runtime_cron_ticks()); // updating last_runtime + total_runtime
+
+        next->stats.wait_cron_stop();
+        if(next->criterion() != IDLE) {
+        	next->link()->rank(Criterion(next->stats.wait_history_media(), next->queue()));
+        }
+
         next->stats.runtime_cron_start();
 
         db<Thread>(TRC) << "[prev!=next] TID: " << prev << " | Wait Media: " << prev->stats.wait_history_media() << " | Runtime Media: " << 
